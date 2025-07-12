@@ -345,9 +345,8 @@ class PlayerAgent(Player):
         playerId:   str,
         playerRole: str
         ) -> None:
+        super().__init__(playerId, playerRole)
         self.agent:     ReActAgent  = ReActAgent.from_tools(tools)
-        self.playerId:  str         = playerId
-        self.playerRole:str         = playerRole
 
     def set_current_player(self) -> None:
         game:GameController = Architecture.Get((GameController))
@@ -360,6 +359,27 @@ class PlayerAgent(Player):
     def play_action(self, message:str, tool_choice:str) -> ChatResponse:
         result:ChatResponse = self.agent.chat(f"{message}",self.get_chat_history(),tool_choice=tool_choice)
         return result
+
+    def speech(self) -> None:
+        """发言方法"""
+        config = ProjectConfig()
+        translate = config.FindItem("Translate",{})
+        message = f"{translate.get('speech_prompt', 'Please make your speech.')}"
+        self.play_chat(message)
+
+    def vote(self) -> None:
+        """投票方法"""
+        config = ProjectConfig()
+        translate = config.FindItem("Translate",{})
+        message = f"{translate.get('vote_prompt', 'Please vote for a player to eliminate.')} Available targets: {AgentToolSkills.get_alive_players()}"
+        self.play_chat(message)
+
+    def justify(self) -> None:
+        """辩护方法"""
+        config = ProjectConfig()
+        translate = config.FindItem("Translate",{})
+        message = f"{translate.get('justify_prompt', 'Please justify your position.')}"
+        self.play_chat(message)
 
     def night_action(self, action_type: str) -> None:
         """夜晚行动方法"""

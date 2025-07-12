@@ -40,6 +40,10 @@
       "seer_night_prompt": "预言家，请选择一个玩家进行查验",
       "witch_save_prompt": "女巫，今晚有人被杀了，你要救他吗？",
       "witch_poison_prompt": "女巫，你要使用毒药吗？",
+      "speech_prompt": "请进行发言",
+      "vote_prompt": "请投票选择一个玩家进行放逐",
+      "justify_prompt": "请进行辩护",
+      "llm_settings_registered": "LLM设置已注册",
       "prompt": {
         "game_rule": "游戏规则",
         "your_role": "你的角色",
@@ -61,6 +65,12 @@
       "村民": ["speech", "vote", "justify", "testament"],
       "预言家": ["speech", "vote", "justify", "testament", "seer_investigate"],
       "女巫": ["speech", "vote", "justify", "testament", "witch_save", "witch_poison"]
+    },
+    "room": {
+      "狼人": 2,
+      "村民": 4,
+      "预言家": 1,
+      "女巫": 1
     }
   }
 } 

@@ -81,7 +81,9 @@ class GameController:
         
         ui:UISystem = Architecture.Get(UISystem)
         ui.system_message(self.victory_conditions)
-            
+    
+    def add_player(self, player:Player) -> None:
+        self.players[player.playerId] = player
 
     def start_day(self) -> None:
         Architecture.Get(DaySystem).start()
@@ -163,7 +165,6 @@ class DaySystem:
         # 检查胜利条件
         victory_condition = game.check_victory_conditions()
         if victory_condition:
-            ui.system_message(victory_condition)
             return
 
         self._speech_and_vote()
@@ -284,7 +285,6 @@ class NightSystem:
         # 检查胜利条件
         victory_condition = game.check_victory_conditions()
         if victory_condition:
-            ui.system_message(victory_condition)
             return
         
         ui.phase(config.FindItem("Translate",{}).get("night_phase","night phase"))
