@@ -1,3 +1,4 @@
+from fnmatch import translate
 from Convention.Convention.Runtime.Architecture                 import Architecture
 from Convention.Convention.Runtime.GlobalConfig                 import ProjectConfig
 
@@ -56,8 +57,9 @@ class PublicMemory:
         read_memory = all_memory[-max_memory_count:] if len(all_memory)>max_memory_count else all_memory
         return "---\n".join(read_memory)
 
-    def add_memory(self,playerId:str,stats:str,message:str):
-        self.memory.append((playerId,stats,message))
+    def add_memory(self,playerId:str,message:str):
+        game:GameController = Architecture.Get((GameController))
+        self.memory.append((playerId,game.current_phase,message))
 
 __PublicMemory = PublicMemory()
 
@@ -71,35 +73,64 @@ class AgentToolSkills:
         '''
         夜晚过后的发言环节,玩家可以发言,所有玩家都可以听到
 
+        你可以通过过往的记忆来推断其他玩家的身份
+
         参数:
             message: 玩家发言内容
         '''
-        config = ProjectConfig()
         game:GameController = Architecture.Get((GameController))
-        current_player:Player = game.current_player
         memory:PublicMemory = Architecture.Get((PublicMemory))
-        memory.add_memory(current_player.playerId,config.FindItem("Translate",{}).get("speech","speech"),message)
+        
+        current_player:Player = game.current_player
+        memory.add_memory(
+            current_player.playerId,
+            message)
         ui:UISystem = Architecture.Get((UISystem))
-        ui.public_speech(current_player.playerId,current_player.playerRole,message)
+        ui.public_speech(
+            current_player.playerId,
+            current_player.playerRole,
+            message)
 
     @staticmethod
-    def vote(targetId:str) -> None:
+    def vote(targetId:str) -> str:
         '''
         发言后的投票环节,若存在唯一的得票最多的角色将被放逐(死亡)
 
+        你可以通过get_who_are_you工具获取你自己的targetId，请尽量不要投给自己，这很危险
+
+        你可以通过get_player_role工具获取你自己的身份，请不要投给自己阵营的成员，这会降低你的胜率
+
+        你可以通过get_dead_players工具获取所有死亡玩家的列表，请不要投给死亡玩家，这会被算做无效票
+
+        请使用get_alive_players工具获取所有存活玩家的列表，请投给存活玩家
+
         参数:
             targetId: 被投票的玩家ID
+
+        返回:
+            任务状态
         '''
         config = ProjectConfig()
-        translate = config.FindItem("Translate",{})
         game:GameController = Architecture.Get((GameController))
-        current_player:Player = game.current_player
         voteSystem:DaySystem = Architecture.Get((DaySystem))
-        voteSystem.vote(targetId)
         memory:PublicMemory = Architecture.Get((PublicMemory))
-        memory.add_memory(current_player.playerId,translate.get("vote","vote"),translate.get("vote_target",f"vote target:{targetId}"))
+
+        if game.current_phase != config.FindItem("Translate",{}).get("vote","vote"):
+            return config.FindItem("Translate",{}).get("not_vote_phase","not vote phase")
+
+        translate = config.FindItem("Translate",{})
+        current_player:Player = game.current_player
+        voteSystem.vote(targetId)
+        memory.add_memory(
+            current_player.playerId,
+            translate.get("vote_target",f"vote target:{targetId}").format(targetId=targetId))
         ui:UISystem = Architecture.Get((UISystem))
-        ui.public_speech(current_player.playerId,current_player.playerRole,translate.get("vote_target",f"vote target:{targetId}"))
+        ui.public_speech(
+            current_player.playerId,
+            current_player.playerRole,
+            translate.get("vote_target",f"vote target:{targetId}").format(targetId=targetId))
+
+        return config.FindItem("Translate",{}).get("vote_success","vote success")
 
     @staticmethod
     def justify(message:str) -> None:
@@ -109,13 +140,18 @@ class AgentToolSkills:
         参数:
             message: 玩家辩护内容
         '''
-        config = ProjectConfig()
         game:GameController = Architecture.Get((GameController))
-        current_player:Player = game.current_player
         memory:PublicMemory = Architecture.Get((PublicMemory))
-        memory.add_memory(current_player.playerId,config.FindItem("Translate",{}).get("justify","justify"),message)
+
+        current_player:Player = game.current_player
+        memory.add_memory(
+            current_player.playerId,
+            message)
         ui:UISystem = Architecture.Get((UISystem))
-        ui.public_speech(current_player.playerId,current_player.playerRole,message)
+        ui.public_speech(
+            current_player.playerId,
+            current_player.playerRole,
+            message)
 
     @staticmethod
     def testament(message:str) -> None:
@@ -125,196 +161,275 @@ class AgentToolSkills:
         参数:
             message: 玩家遗言内容
         '''
-        config = ProjectConfig()
         game:GameController = Architecture.Get((GameController))
-        current_player:Player = game.current_player
         memory:PublicMemory = Architecture.Get((PublicMemory))
-        memory.add_memory(current_player.playerId,config.FindItem("Translate",{}).get("testament","testament"),message)
-        ui:UISystem = Architecture.Get((UISystem))
-        ui.public_speech(current_player.playerId,current_player.playerRole,message)
 
-    # 夜晚行动技能
+        current_player:Player = game.current_player
+        memory.add_memory(
+            current_player.playerId,
+            message)
+        ui:UISystem = Architecture.Get((UISystem))
+        ui.public_speech(
+            current_player.playerId,
+            current_player.playerRole,
+            message)
+
     @staticmethod
-    def werewolf_kill(targetId: str) -> None:
+    def werewolf_private_speech(message:str) -> None:
         '''
-        狼人夜晚击杀技能,狼人可以选择一个目标进行击杀
+        狼人夜晚的群体讨论，所有狼人都可以听到，但是其他玩家看不到
 
         参数:
-            targetId: 被击杀的玩家ID
+            message: 狼人发言内容
+        '''
+        game:GameController = Architecture.Get((GameController))
+        ui:UISystem = Architecture.Get((UISystem))
+        memory: PublicMemory = Architecture.Get((PublicMemory))
+
+        current_player:Player = game.current_player
+        memory.add_memory(
+            current_player.playerId,
+            message
+            )
+        ui.private_speech(
+            current_player.playerId,
+            current_player.playerRole,
+            message)
+
+    @staticmethod
+    def werewolf_vote(targetId: str) -> str:
+        '''
+        狼人夜晚投票技能,狼人可以选择一个目标进行投票,最终会选择一个得票最多的目标击杀
+
+        你可以通过get_who_are_you工具获取你自己的targetId，请尽量不要投给自己，这很危险
+
+        你可以通过get_player_role工具获取你自己的身份，请不要投给自己阵营的成员，这会降低你的胜率
+
+        你可以通过get_dead_players工具获取所有死亡玩家的列表，请不要投给死亡玩家，这会被算做无效票
+
+        请使用get_alive_players工具获取所有存活玩家的列表，请投给存活玩家
+
+        参数:
+            targetId: 被投票的玩家ID
+
+        返回:
+            任务状态
         '''
         config = ProjectConfig()
         game: GameController = Architecture.Get((GameController))
-        current_player: Player = game.current_player
-        
-        # 验证当前玩家是狼人
-        if not current_player.is_werewolf:
-            return
+        night_system:NightSystem = Architecture.Get((NightSystem))
+        ui:UISystem = Architecture.Get((UISystem))
+
+        if game.current_phase != config.FindItem("Translate",{}).get("werewolf_vote","werewolf vote"):
+            return config.FindItem("Translate",{}).get("not_vote_phase","not vote phase")
             
-        # 验证目标玩家存在且存活
+        current_player: Player = game.current_player
         if targetId not in game.players or not game.players[targetId].is_alive:
             return
             
-        # 设置狼人击杀目标
-        night_system = Architecture.Get((NightSystem))
-        night_system.set_night_kill_target(targetId)
+        night_system.werewolf_vote(targetId)
         
-        # 记录到记忆
         memory: PublicMemory = Architecture.Get((PublicMemory))
-        memory.add_memory(current_player.playerId, "werewolf_kill", f"target: {targetId}")
-        
-        # 私密消息
-        ui: UISystem = Architecture.Get((UISystem))
-        ui.private_speech(current_player.playerId, current_player.playerRole, 
-                         config.FindItem("Translate",{}).get("werewolf_kill_target", f"werewolf kill target: {targetId}"))
+        memory.add_memory(
+            current_player.playerId,
+            f"target: {targetId}"
+            )
+        ui.private_speech(
+            current_player.playerId,
+            current_player.playerRole,
+            str(targetId)
+            )
+
+        return config.FindItem("Translate",{}).get("werewolf_vote_success","werewolf vote success")
 
     @staticmethod
     def seer_investigate(targetId: str) -> None:
         '''
         预言家夜晚查验技能,预言家可以查验一个玩家的身份
 
+        你可以通过get_who_are_you工具获取你自己的targetId，请尽量不要查验自己，这毫无意义
+
+        你可以通过get_dead_players工具获取所有死亡玩家的列表，请不要查验死亡玩家，这将会导致查验无效
+
+        请使用get_alive_players工具获取所有存活玩家的列表，请查验存活玩家
+
         参数:
             targetId: 被查验的玩家ID
         '''
         config = ProjectConfig()
         game: GameController = Architecture.Get((GameController))
+        ui: UISystem = Architecture.Get((UISystem))
+        memory: PublicMemory = Architecture.Get((PublicMemory))
+
         current_player: Player = game.current_player
-        
-        # 验证当前玩家是预言家
-        if current_player.playerRole != config.FindItem("Translate",{}).get("seer", "seer"):
-            return
+        translate = config.FindItem("Translate",{})
             
-        # 验证目标玩家存在且存活
         if targetId not in game.players or not game.players[targetId].is_alive:
             return
-            
-        target_player = game.players[targetId]
-        result = "werewolf" if target_player.is_werewolf else "villager"
-        
-        # 设置查验结果
-        night_system = Architecture.Get((NightSystem))
-        night_system.set_seer_result(f"{targetId}: {result}")
-        
-        # 记录到记忆
-        memory: PublicMemory = Architecture.Get((PublicMemory))
-        memory.add_memory(current_player.playerId, "seer_investigate", f"target: {targetId}, result: {result}")
-        
-        # 私密消息
-        ui: UISystem = Architecture.Get((UISystem))
-        ui.private_speech(current_player.playerId, current_player.playerRole,
-                         config.FindItem("Translate",{}).get("seer_result", f"investigation result: {targetId} is {result}"))
+
+        message = translate.get("seer_result","investigation result: {targetId} {result}"
+                ).format(
+                    targetId=targetId,
+                    result=translate.get("is_werewolf","is werewolf") 
+                    if game.players[targetId].is_werewolf 
+                    else translate.get("not_werewolf","not werewolf"))
+        memory.add_memory(
+            current_player.playerId,
+            message
+            )
+        ui.private_speech(
+            current_player.playerId,
+            current_player.playerRole,
+            message)
 
     @staticmethod
-    def witch_save(targetId: str) -> None:
+    def witch_save() -> str:
         '''
         女巫夜晚救人技能,女巫可以使用解药救活被狼人击杀的玩家
 
-        参数:
-            targetId: 被救的玩家ID
+        你可以通过get_who_are_you工具获取你自己的targetId
+
+        你可以通过get_player_role工具获取你自己的身份
+
+        你可以通过get_dead_players工具获取所有死亡玩家的列表，请不要尝试解救早已死亡玩家，这会视为无效
+
+        请使用get_alive_players工具获取所有存活玩家的列表，请参考活着的玩家情况来选择是否解救
+
+        你可以通过get_night_kill_target工具获取今晚狼人的击杀目标，请参考击杀目标情况来选择是否解救
+
+        返回:
+            任务状态
         '''
         config = ProjectConfig()
         game: GameController = Architecture.Get((GameController))
-        current_player: Player = game.current_player
-        
-        # 验证当前玩家是女巫
-        if current_player.playerRole != config.FindItem("Translate",{}).get("witch", "witch"):
-            return
-            
-        # 验证目标玩家存在且已死亡
-        if targetId not in game.players or game.players[targetId].is_alive:
-            return
-            
-        # 检查解药是否已使用
-        night_system = Architecture.Get((NightSystem))
-        if night_system.is_witch_save_used():
-            return
-            
-        # 使用解药
-        night_system.set_witch_save_used(True)
-        game.players[targetId].is_alive = True
-        game.players[targetId].cause_of_death = None
-        
-        # 记录到记忆
-        memory: PublicMemory = Architecture.Get((PublicMemory))
-        memory.add_memory(current_player.playerId, "witch_save", f"target: {targetId}")
-        
-        # 私密消息
         ui: UISystem = Architecture.Get((UISystem))
-        ui.private_speech(current_player.playerId, current_player.playerRole,
-                         config.FindItem("Translate",{}).get("witch_save_target", f"witch save target: {targetId}"))
+        memory: PublicMemory = Architecture.Get((PublicMemory))
+        night_system: NightSystem = Architecture.Get((NightSystem))
+
+        current_player: Player = game.current_player
+        translate = config.FindItem("Translate",{})
+
+        if current_player.skill_stats.get("witch_save",False):
+            return config.FindItem("Translate",{}).get("witch_save_already","witch save already")
+
+        if night_system.werewolf_kill_target:
+            night_system.werewolf_kill_target = None
+            message = translate.get("witch_save_target","witch save target: {targetId}"
+                    ).format(targetId=night_system.werewolf_kill_target)
+            memory.add_memory(
+                current_player.playerId,
+                message
+                )
+            ui.private_speech(
+                current_player.playerId,
+                current_player.playerRole,
+                message
+                )
+            current_player.skill_stats["witch_save"] = False
+            return config.FindItem("Translate",{}).get("witch_save_success","witch save success")
+        else:
+            return config.FindItem("Translate",{}).get("witch_save_not_target","witch save not target")
 
     @staticmethod
-    def witch_poison(targetId: str) -> None:
+    def witch_poison(targetId: str) -> str:
         '''
         女巫夜晚毒人技能,女巫可以使用毒药毒死一个玩家
 
+        你可以通过get_who_are_you工具获取你自己的targetId，请尽量不要毒害自己，这很危险
+
+        你可以通过get_player_role工具获取你自己的身份，请不要毒害自己阵营的成员，这会降低你的胜率
+
+        你可以通过get_dead_players工具获取所有死亡玩家的列表，请不要毒害死亡玩家，这会被视为无效
+
+        请使用get_alive_players工具获取所有存活玩家的列表，请参考活着的玩家情况来选择是否毒害
+
         参数:
             targetId: 被毒的玩家ID
+
+        返回:
+            任务状态
         '''
         config = ProjectConfig()
         game: GameController = Architecture.Get((GameController))
-        current_player: Player = game.current_player
-        
-        # 验证当前玩家是女巫
-        if current_player.playerRole != config.FindItem("Translate",{}).get("witch", "witch"):
-            return
-            
-        # 验证目标玩家存在且存活
-        if targetId not in game.players or not game.players[targetId].is_alive:
-            return
-            
-        # 检查毒药是否已使用
-        night_system = Architecture.Get((NightSystem))
-        if night_system.is_witch_poison_used():
-            return
-            
-        # 使用毒药
-        night_system.set_witch_poison_used(True)
-        game.players[targetId].kill(config.FindItem("Translate",{}).get("witch_poison", "witch poison"))
-        
-        # 记录到记忆
-        memory: PublicMemory = Architecture.Get((PublicMemory))
-        memory.add_memory(current_player.playerId, "witch_poison", f"target: {targetId}")
-        
-        # 私密消息
         ui: UISystem = Architecture.Get((UISystem))
-        ui.private_speech(current_player.playerId, current_player.playerRole,
-                         config.FindItem("Translate",{}).get("witch_poison_target", f"witch poison target: {targetId}"))
+        memory: PublicMemory = Architecture.Get((PublicMemory))
+
+        current_player: Player = game.current_player
+        translate = config.FindItem("Translate",{})
+
+        if current_player.skill_stats.get("witch_poison",False):
+            return config.FindItem("Translate",{}).get("witch_poison_already","witch poison already")
+
+        if targetId not in game.players or not game.players[targetId].is_alive:
+            return config.FindItem("Translate",{}).get("witch_poison_not_target","witch poison not target")
+
+        game.players[targetId].kill(translate.get("witch_kill","witch kill"))
+        message = translate.get("witch_poison_target","witch poison target: {targetId}"
+                ).format(targetId=targetId)
+        memory.add_memory(
+            current_player.playerId,
+            message
+            )
+        ui.private_speech(
+            current_player.playerId,
+            current_player.playerRole,
+            message
+            )
+        current_player.skill_stats["witch_poison"] = False
+        return config.FindItem("Translate",{}).get("witch_poison_success","witch poison success")
 
     @staticmethod
-    def get_alive_players() -> str:
+    def get_alive_players() -> List[str]:
         '''
         获取所有存活玩家的列表,用于夜晚行动时选择目标
 
         返回:
-            存活玩家ID列表的字符串表示
+            存活玩家ID列表
         '''
         game: GameController = Architecture.Get((GameController))
         alive_players = [player.playerId for player in game.players.values() if player.is_alive]
-        return ", ".join(alive_players)
+        return alive_players
 
     @staticmethod
-    def get_dead_players() -> str:
+    def get_dead_players() -> List[str]:
         '''
         获取所有死亡玩家的列表,用于女巫救人时选择目标
 
         返回:
-            死亡玩家ID列表的字符串表示
+            死亡玩家ID列表
         '''
         game: GameController = Architecture.Get((GameController))
         dead_players = [player.playerId for player in game.players.values() if not player.is_alive]
-        return ", ".join(dead_players)
+        return dead_players
 
     @staticmethod
-    def get_night_kill_target() -> str:
+    def get_night_kill_target() -> Optional[str]:
         '''
         获取今晚狼人的击杀目标,用于女巫判断是否救人
 
         返回:
             狼人击杀目标的ID,如果没有则为空字符串
         '''
-        night_system = Architecture.Get((NightSystem))
-        target = night_system.get_night_kill_target()
-        return target if target else ""
+        night_system:NightSystem = Architecture.Get((NightSystem))
+        return night_system.werewolf_kill_target or ""
+
+    @staticmethod
+    def playerId_of_myself() -> str:
+        '''
+        获取玩家自己的id名称
+        '''
+        game: GameController = Architecture.Get((GameController))
+        current_player: Player = game.current_player
+        return current_player.playerId
+
+    @staticmethod
+    def playerRole_of_myself() -> str:
+        '''
+        获取玩家自己扮演的身份
+        '''
+        game: GameController = Architecture.Get((GameController))
+        current_player: Player = game.current_player
+        return current_player.playerRole
 
 #endregion
 
@@ -330,12 +445,15 @@ class PlayerAgent(Player):
                 f"# {format_prompt_translate.get("game_rule","game rule")}\n\n{config.FindItem("game_prompt")}"+
                 f"# {format_prompt_translate.get("your_role","your role")}\n\n{self.playerRole}"+
                 f"# {format_prompt_translate.get("your_role_introduction","your role introduction")}\n\n{config.FindItem("role_prompt")[self.playerRole]}"+
-                f"# {format_prompt_translate.get("your_name","your name")}\n\n{self.playerId}"+
+                f"# {format_prompt_translate.get("your_name","your name")}\n\n{self.playerId}",
+                MessageRole.SYSTEM
+                ),
+            ChatMessage.from_str(
                 f"# {format_prompt_translate.get("known_speech_history","known speech history")}\n\n{
                     memory.read_memory(config.FindItem("allow_memory_stats")[self.playerRole])
                     }",
-                MessageRole.SYSTEM
-                ),
+                MessageRole.USER
+                )
         ]
         return result
 
@@ -343,14 +461,15 @@ class PlayerAgent(Player):
         self, 
         tools:      List[BaseTool], 
         playerId:   str,
-        playerRole: str
+        playerRole: str,
+        skill_stats:Dict[str,bool]={}
         ) -> None:
-        super().__init__(playerId, playerRole)
-        self.agent:     ReActAgent  = ReActAgent.from_tools(tools)
-
-    def set_current_player(self) -> None:
-        game:GameController = Architecture.Get((GameController))
-        game.current_player = self
+        super().__init__(
+            playerId,
+            playerRole,
+            skill_stats=skill_stats
+        )
+        self.agent:     ReActAgent  = ReActAgent.from_tools(tools, verbose=True)
 
     def play_chat(self, message:str) -> ChatResponse:
         result:ChatResponse = self.agent.chat(f"{message}",self.get_chat_history())
@@ -360,49 +479,147 @@ class PlayerAgent(Player):
         result:ChatResponse = self.agent.chat(f"{message}",self.get_chat_history(),tool_choice=tool_choice)
         return result
 
+    @override
     def speech(self) -> None:
         """发言方法"""
         config = ProjectConfig()
         translate = config.FindItem("Translate",{})
         message = f"{translate.get('speech_prompt', 'Please make your speech.')}"
-        self.play_chat(message)
+        AgentToolSkills.speech(str(self.play_chat(message)))
 
+    @override
     def vote(self) -> None:
         """投票方法"""
         config = ProjectConfig()
         translate = config.FindItem("Translate",{})
         message = f"{translate.get('vote_prompt', 'Please vote for a player to eliminate.')} Available targets: {AgentToolSkills.get_alive_players()}"
-        self.play_chat(message)
+        self.play_action(message,"vote")
 
+    @override
     def justify(self) -> None:
         """辩护方法"""
         config = ProjectConfig()
         translate = config.FindItem("Translate",{})
         message = f"{translate.get('justify_prompt', 'Please justify your position.')}"
-        self.play_chat(message)
+        AgentToolSkills.justify(str(self.play_chat(message)))
 
-    def night_action(self, action_type: str) -> None:
-        """夜晚行动方法"""
+    @override
+    def testament(self) -> None:
+        """遗言方法"""
         config = ProjectConfig()
         translate = config.FindItem("Translate",{})
-        
-        # 根据角色和行动类型发送相应的提示
-        if action_type == "werewolf_kill" and self.is_werewolf:
-            message = f"{translate.get('werewolf_night_prompt', 'Werewolves, please discuss and choose a target to kill.')} Available targets: {AgentToolSkills.get_alive_players()}"
-            self.play_chat(message)
-            
-        elif action_type == "seer_investigate" and self.playerRole == translate.get("seer", "seer"):
-            message = f"{translate.get('seer_night_prompt', 'Seer, please choose a player to investigate.')} Available targets: {AgentToolSkills.get_alive_players()}"
-            self.play_chat(message)
-            
-        elif action_type == "witch_action" and self.playerRole == translate.get("witch", "witch"):
-            night_kill_target = AgentToolSkills.get_night_kill_target()
-            if night_kill_target:
-                message = f"{translate.get('witch_save_prompt', 'Witch, someone was killed tonight. Do you want to save them?')} Killed player: {night_kill_target}"
-                self.play_chat(message)
-            else:
-                message = f"{translate.get('witch_poison_prompt', 'Witch, do you want to use poison?')} Available targets: {AgentToolSkills.get_alive_players()}"
-                self.play_chat(message)
+        message = f"{translate.get('testament_prompt', 'Please leave your testament.')}"
+        AgentToolSkills.testament(str(self.play_chat(message)))
+
+    @classmethod
+    def create(cls,playerId:str,playerRole:str) -> "PlayerAgent":
+        config = ProjectConfig()
+        translate = config.FindItem("Translate",{})
+        if playerRole == translate.get("werewolf","werewolf"):
+            return WerewolfAgent(playerId)
+        elif playerRole == translate.get("seer","seer"):
+            return SeerAgent(playerId)
+        elif playerRole == translate.get("witch","witch"):
+            return WitchAgent(playerId)
+        else:
+            return VillagerAgent(playerId)
+
+class WerewolfAgent(PlayerAgent):
+    def __init__(self,playerId:str) -> None:
+        config = ProjectConfig()
+        playerRole = config.FindItem("Translate",{}).get("werewolf","werewolf")
+        super().__init__(
+            create_player_tools(playerRole),
+            playerId,
+            playerRole,
+            )
+    
+    @override
+    def night_private_speech(self) -> None:
+        """狼人夜晚讨论"""
+        config = ProjectConfig()
+        message = config.FindItem("Translate",{}).get('werewolf_night_speech_prompt','werewolf,please discuss how to choose a target to kill')
+        AgentToolSkills.werewolf_private_speech(str(self.play_chat(message)))
+
+    @override
+    def night_action(self) -> None:
+        """狼人夜晚投票击杀玩家"""
+        config = ProjectConfig()
+        self.play_action(
+            f"{config.FindItem("Translate",{}
+                ).get('werewolf_night_prompt','werewolf,please vote a player to kill')}",
+            "werewolf_vote"
+            )
+
+class SeerAgent(PlayerAgent):
+    def __init__(self,playerId:str) -> None:
+        config = ProjectConfig()
+        playerRole = config.FindItem("Translate",{}).get("seer","seer")
+        super().__init__(
+            create_player_tools(playerRole),
+            playerId,
+            playerRole,
+            )
+    
+    @override
+    def night_private_speech(self) -> None:
+        """晚上不发言"""
+        pass
+
+    @override
+    def night_action(self) -> None:
+        """预言家在夜晚查验玩家身份"""
+        config = ProjectConfig()
+        self.play_action(
+            f"{config.FindItem("Translate",{}
+                ).get('seer_night_prompt','seer,please choose a player to investigate')}",
+            "seer_investigate"
+            )
+
+class WitchAgent(PlayerAgent):
+    def __init__(self,playerId:str) -> None:
+        config = ProjectConfig()
+        playerRole = config.FindItem("Translate",{}).get("witch","witch")
+        super().__init__(
+            create_player_tools(playerRole),
+            playerId,
+            playerRole,
+            )
+    
+    @override
+    def night_private_speech(self) -> None:
+        """晚上不发言"""
+        pass
+    
+    @override
+    def night_action(self) -> None:
+        """女巫在夜晚使用药剂"""
+        config = ProjectConfig()
+        self.play_action(
+            f"{config.FindItem("Translate",{}
+                ).get('witch_night_prompt','witch,if someone is killed,you can save him or use poison')}",
+            "witch_save;witch_poison"
+            )
+
+class VillagerAgent(PlayerAgent):
+    def __init__(self,playerId:str) -> None:
+        config = ProjectConfig()
+        playerRole = config.FindItem("Translate",{}).get("villager","villager")
+        super().__init__(
+            create_player_tools(playerRole),
+            playerId,
+            playerRole,
+            )
+    
+    @override
+    def night_private_speech(self) -> None:
+        """晚上不发言"""
+        pass
+
+    @override
+    def night_action(self) -> None:
+        """村民晚上不行动"""
+        pass
 
 #endregion
 
@@ -414,31 +631,34 @@ def create_player_tools(player_role: str) -> List[BaseTool]:
     
     # 基础工具 - 所有角色都可以使用
     base_tools = [
-        FunctionTool.from_defaults(
-            fn=AgentToolSkills.speech,
-            name="speech",
-            description="在白天发言环节进行公开发言"
-        ),
+        # FunctionTool.from_defaults(
+        #     fn=AgentToolSkills.speech,
+        # ),
         FunctionTool.from_defaults(
             fn=AgentToolSkills.vote,
             name="vote",
             description="在投票环节对某个玩家进行投票"
         ),
-        FunctionTool.from_defaults(
-            fn=AgentToolSkills.justify,
-            name="justify",
-            description="在辩护环节进行辩护发言"
-        ),
-        FunctionTool.from_defaults(
-            fn=AgentToolSkills.testament,
-            name="testament",
-            description="在被放逐后留下遗言"
-        ),
+        # FunctionTool.from_defaults(
+        #     fn=AgentToolSkills.justify,
+        # ),
+        # FunctionTool.from_defaults(
+        #     fn=AgentToolSkills.testament,
+        # ),
         FunctionTool.from_defaults(
             fn=AgentToolSkills.get_alive_players,
-            name="get_alive_players",
-            description="获取所有存活玩家的列表"
-        )
+        ),
+        FunctionTool.from_defaults(
+            fn=AgentToolSkills.get_dead_players,
+        ),
+        FunctionTool.from_defaults(
+            fn=AgentToolSkills.playerId_of_myself,
+        ),
+        FunctionTool.from_defaults(
+            fn=AgentToolSkills.playerRole_of_myself,
+            name="get_player_role",
+            description="获取玩家自己扮演的身份"
+        ),
     ]
     
     config = ProjectConfig()
@@ -449,9 +669,7 @@ def create_player_tools(player_role: str) -> List[BaseTool]:
         # 狼人专用工具
         werewolf_tools = [
             FunctionTool.from_defaults(
-                fn=AgentToolSkills.werewolf_kill,
-                name="werewolf_kill",
-                description="夜晚击杀一个玩家"
+                fn=AgentToolSkills.werewolf_vote,
             )
         ]
         return base_tools + werewolf_tools  # type: ignore
@@ -461,8 +679,6 @@ def create_player_tools(player_role: str) -> List[BaseTool]:
         seer_tools = [
             FunctionTool.from_defaults(
                 fn=AgentToolSkills.seer_investigate,
-                name="seer_investigate",
-                description="夜晚查验一个玩家的身份"
             )
         ]
         return base_tools + seer_tools  # type: ignore
@@ -472,23 +688,12 @@ def create_player_tools(player_role: str) -> List[BaseTool]:
         witch_tools = [
             FunctionTool.from_defaults(
                 fn=AgentToolSkills.witch_save,
-                name="witch_save",
-                description="使用解药救活被狼人击杀的玩家"
             ),
             FunctionTool.from_defaults(
                 fn=AgentToolSkills.witch_poison,
-                name="witch_poison",
-                description="使用毒药毒死一个玩家"
-            ),
-            FunctionTool.from_defaults(
-                fn=AgentToolSkills.get_dead_players,
-                name="get_dead_players",
-                description="获取所有死亡玩家的列表"
             ),
             FunctionTool.from_defaults(
                 fn=AgentToolSkills.get_night_kill_target,
-                name="get_night_kill_target",
-                description="获取今晚狼人的击杀目标"
             )
         ]
         return base_tools + witch_tools  # type: ignore

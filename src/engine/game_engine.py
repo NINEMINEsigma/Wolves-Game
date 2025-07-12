@@ -11,15 +11,18 @@ import                                                         logging
 __logger__ = logging.getLogger(__name__)
 
 class Player(ABC):
-    def __init__(self,playerId:str,playerRole:str) -> None:
+    def __init__(self,playerId:str,playerRole:str,*,skill_stats:Dict[str,bool]={}) -> None:
         self.playerId:      str     = playerId
         self.playerRole:    str     = playerRole
         self.is_alive:      bool    = True
         self.cause_of_death:Optional[str] = None
+        self.skill_stats:   Dict[str,bool] = skill_stats
 
     def kill(self, cause_of_death:str) -> None:
-        self.is_alive = False
-        self.cause_of_death = cause_of_death
+        if self.is_alive:
+            self.is_alive = False
+            self.cause_of_death = cause_of_death
+            self.testament()
 
     @property
     def is_werewolf(self) -> bool:
@@ -44,7 +47,15 @@ class Player(ABC):
         pass
     
     @abstractmethod
-    def night_action(self, action_type: str) -> None:
+    def testament(self) -> None:
+        pass
+
+    @abstractmethod
+    def night_private_speech(self) -> None:
+        pass
+
+    @abstractmethod
+    def night_action(self) -> None:
         pass
 
 #region 游戏主控
@@ -66,11 +77,18 @@ class GameController:
         self.victory_conditions:Optional[str]       = None
         
     def start_game(self) -> None:
+        config = ProjectConfig()
+        ui:UISystem = Architecture.Get(UISystem)
+        translate = config.FindItem("Translate",{})
+
         self.round = 1
         self.current_phase = "night"
         self.current_player = None
 
+        print_colorful(ConsoleFrontColor.GREEN,translate.get("game_start","game start"))
+
         while True:
+            ui.title(translate.get("round","round {round}").format(round=self.round))
             self.start_night()
             if self.check_victory_conditions() is not None:
                 break
@@ -79,7 +97,6 @@ class GameController:
                 break
             self.round += 1
         
-        ui:UISystem = Architecture.Get(UISystem)
         ui.system_message(self.victory_conditions)
     
     def add_player(self, player:Player) -> None:
@@ -129,11 +146,11 @@ class UISystem:
             )
         )
 
-    def title(self,title:str,level:int=1) -> None:
-        print(f"{'#'*level} {title}")
+    def title(self,title:str) -> None:
+        print_colorful(ConsoleFrontColor.RED,f"**{title}**")
 
     def phase(self,phase:str) -> None:
-        print(f"- {phase}")
+        print_colorful(ConsoleFrontColor.BLUE,f"- {phase}")
 
     def public_speech(self,playerId:str,role:str,message:str) -> None:
         print(f"\t- {playerId}({role})：{message}")
@@ -142,7 +159,7 @@ class UISystem:
         print(f"\t- {playerId}({role})：{message}")
 
     def system_message(self,message:str) -> None:
-        print(f"\t- {message}")
+        print_colorful(ConsoleFrontColor.YELLOW,f"\t- {message}")
 
 __UISystem = UISystem()
 
@@ -162,9 +179,9 @@ class DaySystem:
     def start(self) -> None:
         game:GameController = Architecture.Get(GameController)
         ui:UISystem = Architecture.Get(UISystem)
+
         # 检查胜利条件
-        victory_condition = game.check_victory_conditions()
-        if victory_condition:
+        if game.check_victory_conditions():
             return
 
         self._speech_and_vote()
@@ -182,13 +199,15 @@ class DaySystem:
         game.current_phase = speech_translate
         for player in game.players.values():
             game.current_player = player
-            player.speech()
+            if player.is_alive:
+                player.speech()
         # 进入第一轮投票
         ui.phase(vote_translate)
         game.current_phase = vote_translate
         for player in game.players.values():
             game.current_player = player
-            player.vote()
+            if player.is_alive:
+                player.vote()
         # 第一轮投票结束
         result = self._check_vote_result()
         if len(result) == 1:
@@ -215,7 +234,8 @@ class DaySystem:
         game.current_phase = vote_translate
         for player in game.players.values():
             game.current_player = player
-            player.vote()
+            if player.is_alive:
+                player.vote()
         result = self._check_vote_result()
         # 辩护发言与第二轮投票结束
         if len(result) == 1:
@@ -241,11 +261,13 @@ class DaySystem:
     def _banished(self, targetId:str) -> None:
         config = ProjectConfig()
         game:GameController = Architecture.Get(GameController)
-        game.players[targetId].kill(config.FindItem("Translate",{}).get("banished","banished"))
         ui:UISystem = Architecture.Get(UISystem)
         ui.system_message(
-            config.FindItem("Translate",{}).get("banished_result",f"banished result:{targetId} has been banished")
+            config.FindItem("Translate",{}
+                ).get("banished_result","banished result:{targetId} has been banished"
+                ).format(targetId=targetId)
             )
+        game.players[targetId].kill(config.FindItem("Translate",{}).get("banished","banished"))
         self._back_to_day_system()
 
     def _abandon_banishment(self) -> None:
@@ -272,69 +294,69 @@ class NightSystem:
             lambda: None,
             GameController
         )
-        self.night_kill_target: Optional[str] = None
-        self.seer_investigation_result: Optional[str] = None
-        self.witch_save_used: bool = False
-        self.witch_poison_used: bool = False
+        self.werewolf_kill_target: Optional[str] = None
+        self.werewolf_vote_data:Dict[str,int] = {}
 
     def start(self) -> None:
-        config = ProjectConfig()
-        ui: UISystem = Architecture.Get(UISystem)
         game: GameController = Architecture.Get(GameController)
         
         # 检查胜利条件
-        victory_condition = game.check_victory_conditions()
-        if victory_condition:
+        if game.check_victory_conditions():
             return
         
-        ui.phase(config.FindItem("Translate",{}).get("night_phase","night phase"))
-        game.current_phase = "night"
-        
         self._werewolf_start()
-        self._seer_start()
         self._witch_start()
-        
-        # 执行夜晚结果
+        self._seer_start()
+
         self._execute_night_results()
+
+    def werewolf_vote(self,targetId:str) -> None:
+        if targetId not in self.werewolf_vote_data:
+            self.werewolf_vote_data[targetId] = 1
+        else:
+            self.werewolf_vote_data[targetId] += 1
+
+    def _werewolf_vote_result(self) -> None:
+        if not self.werewolf_vote_data.values():
+            return
+        max_vote = max(self.werewolf_vote_data.values())
+        for targetId,vote in self.werewolf_vote_data.items():
+            if vote == max_vote:
+                self.werewolf_kill_target = targetId
+                return
+        return
 
     def _werewolf_start(self) -> None:
         """狼人夜晚行动"""
         config = ProjectConfig()
         game: GameController = Architecture.Get(GameController)
         ui: UISystem = Architecture.Get(UISystem)
-        
-        # 获取所有存活的狼人
+
         werewolves = [player for player in game.players.values() 
                      if player.is_werewolf and player.is_alive]
-        
-        if not werewolves:
-            return
+                     
+        self.werewolf_kill_target = None
+        self.werewolf_vote_data.clear()
             
-        ui.phase(config.FindItem("Translate",{}).get("werewolf_action","werewolf action"))
+        phase = config.FindItem("Translate",{}).get("werewolf_speech","werewolf speech")
+        game.current_phase = phase
+        ui.phase(phase)
         
-        # 狼人群体讨论和投票
-        werewolf_votes = {}
         for werewolf in werewolves:
             game.current_player = werewolf
-            werewolf.night_action("werewolf_kill")
-            
-            # 这里假设狼人通过night_action方法进行投票
-            # 实际实现中需要从AI响应中获取投票结果
-            # 暂时使用随机选择作为示例
-            import random
-            alive_villagers = [p for p in game.players.values() 
-                             if p.is_villager and p.is_alive]
-            if alive_villagers:
-                target = random.choice(alive_villagers).playerId
-                werewolf_votes[target] = werewolf_votes.get(target, 0) + 1
+            if werewolf.is_alive:
+                werewolf.night_private_speech()
         
-        # 确定狼人击杀目标
-        if werewolf_votes:
-            max_votes = max(werewolf_votes.values())
-            candidates = [target for target, votes in werewolf_votes.items() 
-                         if votes == max_votes]
-            if len(candidates) == 1:
-                self.night_kill_target = candidates[0]
+        phase = config.FindItem("Translate",{}).get("werewolf_vote","werewolf vote")
+        game.current_phase = phase
+        ui.phase(phase)
+        
+        for werewolf in werewolves:
+            game.current_player = werewolf
+            if werewolf.is_alive:
+                werewolf.night_action()
+
+        self._werewolf_vote_result()
 
     def _seer_start(self) -> None:
         """预言家夜晚行动"""
@@ -342,19 +364,21 @@ class NightSystem:
         game: GameController = Architecture.Get(GameController)
         ui: UISystem = Architecture.Get(UISystem)
         
-        # 获取存活的预言家
         seers = [player for player in game.players.values() 
                 if player.playerRole == config.FindItem("Translate",{}).get("seer","seer") 
                 and player.is_alive]
         
         if not seers:
             return
-            
-        ui.phase(config.FindItem("Translate",{}).get("seer_action","seer action"))
+
+        phase = config.FindItem("Translate",{}).get("seer_action","seer action")
+        game.current_phase = phase
+        ui.phase(phase)
         
         for seer in seers:
             game.current_player = seer
-            seer.night_action("seer_investigate")
+            if seer.is_alive:
+                seer.night_action()
 
     def _witch_start(self) -> None:
         """女巫夜晚行动"""
@@ -369,63 +393,30 @@ class NightSystem:
         
         if not witches:
             return
-            
-        ui.phase(config.FindItem("Translate",{}).get("witch_action","witch action"))
+
+        phase = config.FindItem("Translate",{}).get("witch_action","witch action")
+        game.current_phase = phase
+        ui.phase(phase)
         
         for witch in witches:
             game.current_player = witch
-            witch.night_action("witch_action")
-
+            if witch.is_alive:
+                witch.night_action()
+    
     def _execute_night_results(self) -> None:
         """执行夜晚结果"""
         config = ProjectConfig()
         game: GameController = Architecture.Get(GameController)
         ui: UISystem = Architecture.Get(UISystem)
         
-        # 处理狼人击杀
-        if self.night_kill_target and self.night_kill_target in game.players:
-            target_player = game.players[self.night_kill_target]
-            if target_player.is_alive:
-                target_player.kill(config.FindItem("Translate",{}).get("werewolf_kill","werewolf kill"))
-                ui.system_message(
-                    config.FindItem("Translate",{}).get("night_death",f"night death: {self.night_kill_target} was killed by werewolves")
-                )
-        
-        # 重置夜晚状态
-        self.night_kill_target = None
-        self.seer_investigation_result = None
-
-    def get_night_kill_target(self) -> Optional[str]:
-        """获取狼人击杀目标"""
-        return self.night_kill_target
-
-    def set_night_kill_target(self, target: str) -> None:
-        """设置狼人击杀目标"""
-        self.night_kill_target = target
-
-    def get_seer_result(self) -> Optional[str]:
-        """获取预言家查验结果"""
-        return self.seer_investigation_result
-
-    def set_seer_result(self, result: str) -> None:
-        """设置预言家查验结果"""
-        self.seer_investigation_result = result
-
-    def is_witch_save_used(self) -> bool:
-        """检查女巫解药是否已使用"""
-        return self.witch_save_used
-
-    def set_witch_save_used(self, used: bool) -> None:
-        """设置女巫解药使用状态"""
-        self.witch_save_used = used
-
-    def is_witch_poison_used(self) -> bool:
-        """检查女巫毒药是否已使用"""
-        return self.witch_poison_used
-
-    def set_witch_poison_used(self, used: bool) -> None:
-        """设置女巫毒药使用状态"""
-        self.witch_poison_used = used
+        if self.werewolf_kill_target:
+            game.players[self.werewolf_kill_target].kill(
+                config.FindItem("Translate",{}).get("werewolf_kill","werewolf kill"))
+            ui.system_message(
+                config.FindItem("Translate",{}
+                    ).get("night_death","night death: {playerId} was killed by werewolves"
+                    ).format(playerId=self.werewolf_kill_target)
+            )
 
 __NightSystem = NightSystem()
 
