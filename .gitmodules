@@ -1,0 +1,3 @@
+[submodule "Convention"]
+	path = Convention
+	url = https://github.com/NINEMINEsigma/Convention-Python.git

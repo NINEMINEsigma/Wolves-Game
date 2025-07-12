@@ -1,0 +1,66 @@
+{
+  "properties": {
+    "ollama_url": "http://localhost:11434",
+    "model": "qwen3:0.6b",
+    "max_memory_count": 999,
+    "Translate": {
+      "werewolf": "狼人",
+      "villager": "村民",
+      "seer": "预言家",
+      "witch": "女巫",
+      "speech": "发言",
+      "vote": "投票",
+      "justify": "辩护",
+      "testament": "遗言",
+      "banished": "被放逐",
+      "werewolf_kill": "被狼人击杀",
+      "witch_poison": "被女巫毒死",
+      "werewolf_victory": "狼人胜利",
+      "villager_victory": "村民胜利",
+      "draw": "平局",
+      "game_controller_registered": "游戏控制器已注册",
+      "ui_system_registered": "UI系统已注册",
+      "day_system_registered": "白天系统已注册",
+      "night_system_registered": "夜晚系统已注册",
+      "public_memory_registered": "公共记忆已注册",
+      "llm_settings_setup": "LLM设置已设置",
+      "night_phase": "夜晚阶段",
+      "werewolf_action": "狼人行动",
+      "seer_action": "预言家行动",
+      "witch_action": "女巫行动",
+      "night_death": "夜晚死亡",
+      "banished_result": "放逐结果",
+      "abandon_banishment": "无人被放逐",
+      "vote_target": "投票目标",
+      "werewolf_kill_target": "狼人击杀目标",
+      "seer_result": "查验结果",
+      "witch_save_target": "女巫救人目标",
+      "witch_poison_target": "女巫毒人目标",
+      "werewolf_night_prompt": "狼人们，请讨论并选择一个目标进行击杀",
+      "seer_night_prompt": "预言家，请选择一个玩家进行查验",
+      "witch_save_prompt": "女巫，今晚有人被杀了，你要救他吗？",
+      "witch_poison_prompt": "女巫，你要使用毒药吗？",
+      "prompt": {
+        "game_rule": "游戏规则",
+        "your_role": "你的角色",
+        "your_role_introduction": "你的角色介绍",
+        "your_name": "你的名字",
+        "known_speech_history": "已知的发言历史"
+      },
+      "memory_format": "- 玩家 {playerId} 在 {stats} 环节说：\n{content}"
+    },
+    "game_prompt": "这是一个狼人杀游戏。游戏分为夜晚和白天两个阶段。夜晚阶段，狼人可以击杀一个玩家，预言家可以查验一个玩家的身份，女巫可以使用解药救人或使用毒药毒人。白天阶段，所有玩家进行发言和投票，得票最多的玩家将被放逐。狼人阵营的目标是消灭所有村民，村民阵营的目标是消灭所有狼人。",
+    "role_prompt": {
+      "狼人": "你是狼人阵营的一员。夜晚阶段，你可以与其他狼人讨论并选择一个目标进行击杀。白天阶段，你需要伪装成村民，避免被放逐。",
+      "村民": "你是村民阵营的一员。你没有特殊技能，但可以通过发言和投票来帮助找出狼人。",
+      "预言家": "你是预言家，属于村民阵营。夜晚阶段，你可以查验一个玩家的身份，知道他是狼人还是村民。",
+      "女巫": "你是女巫，属于村民阵营。你有一瓶解药和一瓶毒药，每瓶药只能使用一次。夜晚阶段，如果有人被狼人击杀，你可以选择使用解药救活他；你也可以选择使用毒药毒死一个玩家。"
+    },
+    "allow_memory_stats": {
+      "狼人": ["speech", "vote", "justify", "testament", "werewolf_kill"],
+      "村民": ["speech", "vote", "justify", "testament"],
+      "预言家": ["speech", "vote", "justify", "testament", "seer_investigate"],
+      "女巫": ["speech", "vote", "justify", "testament", "witch_save", "witch_poison"]
+    }
+  }
+} 
