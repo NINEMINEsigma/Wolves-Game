@@ -96,6 +96,8 @@ class AgentToolSkills:
         '''
         发言后的投票环节,若存在唯一的得票最多的角色将被放逐(死亡)
 
+        【强制工具使用】在投票前，你必须先使用get_alive_players工具获取当前存活玩家列表！
+
         你可以通过get_who_are_you工具获取你自己的targetId，请尽量不要投给自己，这很危险
 
         你可以通过get_player_role工具获取你自己的身份，请不要投给自己阵营的成员，这会降低你的胜率
@@ -201,6 +203,8 @@ class AgentToolSkills:
         '''
         狼人夜晚投票技能,狼人可以选择一个目标进行投票,最终会选择一个得票最多的目标击杀
 
+        【强制工具使用】在投票前，你必须先使用get_alive_players工具获取当前存活玩家列表！
+
         你可以通过get_who_are_you工具获取你自己的targetId，请尽量不要投给自己，这很危险
 
         你可以通过get_player_role工具获取你自己的身份，请不要投给自己阵营的成员，这会降低你的胜率
@@ -225,7 +229,7 @@ class AgentToolSkills:
             
         current_player: Player = game.current_player
         if targetId not in game.players or not game.players[targetId].is_alive:
-            return
+            return config.FindItem("Translate",{}).get("not_vote_phase","not vote phase")
             
         night_system.werewolf_vote(targetId)
         
@@ -246,6 +250,8 @@ class AgentToolSkills:
     def seer_investigate(targetId: str) -> None:
         '''
         预言家夜晚查验技能,预言家可以查验一个玩家的身份
+
+        【强制工具使用】在查验前，你必须先使用get_alive_players工具获取当前存活玩家列表！
 
         你可以通过get_who_are_you工具获取你自己的targetId，请尽量不要查验自己，这毫无意义
 
@@ -286,6 +292,8 @@ class AgentToolSkills:
     def witch_save() -> str:
         '''
         女巫夜晚救人技能,女巫可以使用解药救活被狼人击杀的玩家
+
+        【强制工具使用】在救人前，你必须先使用get_night_kill_target工具获取今晚狼人的击杀目标！
 
         你可以通过get_who_are_you工具获取你自己的targetId
 
@@ -334,6 +342,8 @@ class AgentToolSkills:
     def witch_poison(targetId: str) -> str:
         '''
         女巫夜晚毒人技能,女巫可以使用毒药毒死一个玩家
+
+        【强制工具使用】在毒人前，你必须先使用get_alive_players工具获取当前存活玩家列表！
 
         你可以通过get_who_are_you工具获取你自己的targetId，请尽量不要毒害自己，这很危险
 
@@ -440,12 +450,48 @@ class PlayerAgent(Player):
         memory:PublicMemory = Architecture.Get((PublicMemory))
         config = ProjectConfig()
         format_prompt_translate = config.FindItem("Translate",{}).get("prompt",{})
+        
+        # 获取当前游戏阶段
+        game:GameController = Architecture.Get((GameController))
+        current_phase = game.current_phase if game else "unknown"
+        
+        # 创建动态上下文管理器
+        context_manager = DynamicContextManager()
+        
+        # 构建动态提示词
+        dynamic_prompt = context_manager.build_dynamic_prompt(self, current_phase)
+        
+        # 获取基础游戏规则
+        game_prompt = config.FindItem("game_prompt", {})
+        basic_rules = game_prompt.get("basic_rules", "")
+        phase_rules = game_prompt.get("phase_rules", {})
+        current_phase_rule = phase_rules.get(current_phase, "")
+        
+        # 获取角色配置
+        role_prompt = config.FindItem("role_prompt", {})
+        role_config = role_prompt.get(self.playerRole, {})
+        role_introduction = role_config.get("role_introduction", "") if isinstance(role_config, dict) else str(role_config)
+        
+        # 构建完整的系统提示词
+        system_prompt = f"""# 游戏规则
+{basic_rules}
+
+# 当前阶段规则
+{current_phase_rule}
+
+# 动态上下文
+{dynamic_prompt}
+
+# 角色介绍
+{role_introduction}
+
+# 工具使用要求
+{game_prompt.get("tool_usage_requirements", "")}
+"""
+        
         result:List[ChatMessage] = [
             ChatMessage.from_str(
-                f"# {format_prompt_translate.get("game_rule","game rule")}\n\n{config.FindItem("game_prompt")}"+
-                f"# {format_prompt_translate.get("your_role","your role")}\n\n{self.playerRole}"+
-                f"# {format_prompt_translate.get("your_role_introduction","your role introduction")}\n\n{config.FindItem("role_prompt")[self.playerRole]}"+
-                f"# {format_prompt_translate.get("your_name","your name")}\n\n{self.playerId}",
+                system_prompt,
                 MessageRole.SYSTEM
                 ),
             ChatMessage.from_str(
@@ -637,7 +683,7 @@ def create_player_tools(player_role: str) -> List[BaseTool]:
         FunctionTool.from_defaults(
             fn=AgentToolSkills.vote,
             name="vote",
-            description="在投票环节对某个玩家进行投票"
+            description="在投票环节对某个玩家进行投票。注意：投票前必须先使用get_alive_players工具获取存活玩家列表！"
         ),
         # FunctionTool.from_defaults(
         #     fn=AgentToolSkills.justify,
@@ -647,17 +693,23 @@ def create_player_tools(player_role: str) -> List[BaseTool]:
         # ),
         FunctionTool.from_defaults(
             fn=AgentToolSkills.get_alive_players,
+            name="get_alive_players",
+            description="获取所有存活玩家的列表。这是最重要的工具，在每次行动前都必须先调用此工具！"
         ),
         FunctionTool.from_defaults(
             fn=AgentToolSkills.get_dead_players,
+            name="get_dead_players",
+            description="获取所有死亡玩家的列表，用于了解游戏状态"
         ),
         FunctionTool.from_defaults(
             fn=AgentToolSkills.playerId_of_myself,
+            name="get_who_are_you",
+            description="获取玩家自己的ID名称，用于确认自己的身份"
         ),
         FunctionTool.from_defaults(
             fn=AgentToolSkills.playerRole_of_myself,
             name="get_player_role",
-            description="获取玩家自己扮演的身份"
+            description="获取玩家自己扮演的身份，用于确认自己的角色和阵营"
         ),
     ]
     
@@ -670,6 +722,8 @@ def create_player_tools(player_role: str) -> List[BaseTool]:
         werewolf_tools = [
             FunctionTool.from_defaults(
                 fn=AgentToolSkills.werewolf_vote,
+                name="werewolf_vote",
+                description="狼人夜晚投票技能。注意：投票前必须先使用get_alive_players工具获取存活玩家列表！"
             )
         ]
         return base_tools + werewolf_tools  # type: ignore
@@ -679,6 +733,8 @@ def create_player_tools(player_role: str) -> List[BaseTool]:
         seer_tools = [
             FunctionTool.from_defaults(
                 fn=AgentToolSkills.seer_investigate,
+                name="seer_investigate",
+                description="预言家夜晚查验技能。注意：查验前必须先使用get_alive_players工具获取存活玩家列表！"
             )
         ]
         return base_tools + seer_tools  # type: ignore
@@ -688,12 +744,18 @@ def create_player_tools(player_role: str) -> List[BaseTool]:
         witch_tools = [
             FunctionTool.from_defaults(
                 fn=AgentToolSkills.witch_save,
+                name="witch_save",
+                description="女巫夜晚救人技能。注意：救人前必须先使用get_night_kill_target工具获取夜晚击杀目标！"
             ),
             FunctionTool.from_defaults(
                 fn=AgentToolSkills.witch_poison,
+                name="witch_poison",
+                description="女巫夜晚毒人技能。注意：毒人前必须先使用get_alive_players工具获取存活玩家列表！"
             ),
             FunctionTool.from_defaults(
                 fn=AgentToolSkills.get_night_kill_target,
+                name="get_night_kill_target",
+                description="获取今晚狼人的击杀目标，用于女巫判断是否救人"
             )
         ]
         return base_tools + witch_tools  # type: ignore
@@ -701,6 +763,220 @@ def create_player_tools(player_role: str) -> List[BaseTool]:
     else:
         # 村民只有基础工具
         return base_tools  # type: ignore
+
+#endregion
+
+#region 动态上下文管理
+
+class DynamicContextManager:
+    """动态上下文管理器，负责生成智能体玩家的动态提示词"""
+    
+    def __init__(self):
+        self.config = ProjectConfig()
+        self.translate = self.config.FindItem("Translate", {})
+        self.dynamic_context = self.config.FindItem("dynamic_context", {})
+        self.role_prompt = self.config.FindItem("role_prompt", {})
+        self.game_prompt = self.config.FindItem("game_prompt", {})
+        
+        # 验证配置完整性
+        self._validate_config()
+    
+    def _validate_config(self):
+        """验证配置完整性，提供默认值作为备用"""
+        # 验证dynamic_context配置
+        if not self.dynamic_context:
+            self.dynamic_context = {
+                "identity_reinforcement": "身份强化提醒：你是{role}，属于{team}阵营。你的名字是{playerId}。",
+                "state_awareness": "状态感知提醒：当前游戏阶段是{phase}。",
+                "strategy_guidance": "策略指导：{strategy}",
+                "tool_enforcement": "工具强制使用：在{action}前，你必须先使用{required_tools}工具。",
+                "victory_conditions": "胜利条件：{victory_condition}",
+                "phase_specific_prompts": {
+                    "night": "夜晚阶段：这是你发挥特殊能力的关键时刻。",
+                    "day": "白天阶段：通过发言和投票帮助你的阵营获得胜利。",
+                    "vote": "投票阶段：请使用vote工具进行投票。",
+                    "speech": "发言阶段：通过发言表达你的分析和判断。"
+                }
+            }
+        
+        # 验证role_prompt配置
+        if not self.role_prompt:
+            self.role_prompt = {
+                "狼人": {
+                    "identity_statement": "你是狼人阵营的一员，你的名字是{playerId}。",
+                    "role_introduction": "夜晚阶段，你可以与其他狼人讨论并选择一个目标进行击杀。",
+                    "strategy_guide": {"night": "夜晚策略：选择对狼人阵营威胁最大的目标进行击杀。", "day": "白天策略：伪装成普通村民。"},
+                    "victory_path": "获胜路径：通过夜晚击杀和白天伪装，逐步消灭所有村民阵营玩家。",
+                    "key_actions": "关键行动：夜晚击杀、白天伪装发言、投票时避免投给同阵营成员。",
+                    "tool_priorities": "必需工具：get_alive_players、werewolf_vote、vote"
+                }
+            }
+        
+        # 验证game_prompt配置
+        if not self.game_prompt:
+            self.game_prompt = {
+                "basic_rules": "这是一个狼人杀游戏。",
+                "phase_rules": {"night": "夜晚阶段：狼人阵营可以击杀一名玩家。", "day": "白天阶段：所有玩家依次发言，然后进行投票。"},
+                "victory_conditions": {"werewolf": "狼人阵营胜利条件：消灭所有村民阵营玩家", "villager": "村民阵营胜利条件：消灭所有狼人阵营玩家"},
+                "tool_usage_requirements": "重要提醒：在每次行动前，你必须使用get_alive_players工具获取当前存活玩家列表。"
+            }
+    
+    def generate_identity_reinforcement(self, player_role: str, player_id: str) -> str:
+        """生成身份强化提示词"""
+        try:
+            role_config = self.role_prompt.get(player_role, {})
+            identity_statement = role_config.get("identity_statement", "")
+            
+            # 确定阵营
+            team = "狼人" if player_role == self.translate.get("werewolf", "werewolf") else "村民"
+            
+            # 格式化身份声明
+            formatted_identity = identity_statement.format(playerId=player_id) if identity_statement else f"你是{player_role}，你的名字是{player_id}。"
+            
+            # 添加身份强化提醒
+            identity_template = self.dynamic_context.get("identity_reinforcement", "")
+            identity_reminder = identity_template.format(
+                role=player_role,
+                team=team,
+                playerId=player_id
+            ) if identity_template else f"身份强化提醒：你是{player_role}，属于{team}阵营。你的名字是{player_id}。"
+            
+            return f"{identity_reminder}\n{formatted_identity}"
+        except Exception as e:
+            # 错误处理：返回基础身份信息
+            return f"你是{player_role}，你的名字是{player_id}。"
+    
+    def generate_state_awareness(self, game_phase: str) -> str:
+        """生成状态感知提示词"""
+        try:
+            state_template = self.dynamic_context.get("state_awareness", "")
+            state_reminder = state_template.format(phase=game_phase) if state_template else f"当前游戏阶段是{game_phase}。"
+            
+            # 添加阶段特定提示
+            phase_prompts = self.dynamic_context.get("phase_specific_prompts", {})
+            phase_specific = phase_prompts.get(game_phase, "")
+            
+            return f"{state_reminder}\n{phase_specific}"
+        except Exception as e:
+            # 错误处理：返回基础状态信息
+            return f"当前游戏阶段是{game_phase}。"
+    
+    def generate_strategy_guidance(self, player_role: str, game_phase: str) -> str:
+        """生成策略指导提示词"""
+        try:
+            role_config = self.role_prompt.get(player_role, {})
+            strategy_guide = role_config.get("strategy_guide", {})
+            
+            # 获取当前阶段的策略
+            current_strategy = strategy_guide.get(game_phase, "")
+            
+            # 获取胜利路径和关键行动
+            victory_path = role_config.get("victory_path", "")
+            key_actions = role_config.get("key_actions", "")
+            
+            strategy_template = self.dynamic_context.get("strategy_guidance", "")
+            strategy_reminder = strategy_template.format(strategy=current_strategy) if strategy_template and current_strategy else ""
+            
+            return f"{strategy_reminder}\n获胜路径：{victory_path}\n关键行动：{key_actions}"
+        except Exception as e:
+            # 错误处理：返回基础策略信息
+            return f"请根据你的角色{player_role}在当前阶段{game_phase}进行相应的行动。"
+    
+    def generate_tool_enforcement(self, required_tools: list) -> str:
+        """生成工具强制使用提示词"""
+        try:
+            if not required_tools:
+                return ""
+            
+            tools_str = "、".join(required_tools)
+            tool_template = self.dynamic_context.get("tool_enforcement", "")
+            tool_reminder = tool_template.format(
+                action="当前行动",
+                required_tools=tools_str
+            ) if tool_template else f"工具强制使用：在当前行动前，你必须先使用{tools_str}工具获取必要信息。"
+            
+            return tool_reminder or ""
+        except Exception as e:
+            # 错误处理：返回基础工具提醒
+            return f"请使用{', '.join(required_tools)}工具获取必要信息。" if required_tools else ""
+    
+    def get_required_tools_for_phase(self, player_role: str, game_phase: str) -> list:
+        """根据角色和阶段获取必需的工具"""
+        try:
+            role_config = self.role_prompt.get(player_role, {})
+            tool_priorities = role_config.get("tool_priorities", "")
+            
+            # 基础必需工具
+            base_tools = ["get_alive_players", "get_player_role"]
+            
+            # 根据阶段添加特定工具
+            if game_phase == "vote":
+                base_tools.append("vote")
+            elif game_phase == "werewolf_vote":
+                base_tools.append("werewolf_vote")
+            elif game_phase == "seer_action":
+                base_tools.append("seer_investigate")
+            elif game_phase == "witch_action":
+                base_tools.extend(["witch_save", "witch_poison", "get_night_kill_target"])
+            
+            return base_tools
+        except Exception as e:
+            # 错误处理：返回基础工具列表
+            return ["get_alive_players", "get_player_role"]
+    
+    def build_dynamic_prompt(self, player: 'Player', game_phase: str) -> str:
+        """构建完整的动态提示词"""
+        try:
+            player_role = player.playerRole
+            player_id = player.playerId
+            
+            # 生成各个部分的提示词
+            identity_part = self.generate_identity_reinforcement(player_role, player_id)
+            state_part = self.generate_state_awareness(game_phase)
+            strategy_part = self.generate_strategy_guidance(player_role, game_phase)
+            
+            # 获取必需工具
+            required_tools = self.get_required_tools_for_phase(player_role, game_phase)
+            tool_part = self.generate_tool_enforcement(required_tools)
+            
+            # 获取胜利条件
+            team = "狼人" if player_role == self.translate.get("werewolf", "werewolf") else "村民"
+            victory_conditions = self.game_prompt.get("victory_conditions", {})
+            victory_condition = victory_conditions.get("werewolf" if team == "狼人" else "villager", "")
+            
+            victory_template = self.dynamic_context.get("victory_conditions", "")
+            victory_part = victory_template.format(victory_condition=victory_condition) if victory_template and victory_condition else f"胜利条件：{victory_condition}"
+            
+            # 组合所有部分
+            dynamic_prompt = f"""
+# 身份强化
+{identity_part}
+
+# 状态感知
+{state_part}
+
+# 策略指导
+{strategy_part}
+
+# 胜利条件
+{victory_part}
+
+# 工具使用要求
+{tool_part}
+
+# 重要提醒
+{self.game_prompt.get("tool_usage_requirements", "")}
+"""
+            
+            return dynamic_prompt.strip()
+        except Exception as e:
+            # 错误处理：返回基础提示词
+            return f"""
+# 基础信息
+你是{player.playerRole}，你的名字是{player.playerId}。
+当前游戏阶段是{game_phase}。
+请使用get_alive_players工具获取存活玩家列表。
+"""
 
 #endregion
 
