@@ -2,154 +2,170 @@
   "properties": {
     "ollama_url": "http://localhost:11434",
     "model": "qwen3:0.6b",
+    "agent_verbose": false,
+    "history_verbose": false,
+    "agent_config": {
+      "temperature": 1.7,
+      "thinking": true,
+      "request_timeout": 30
+    },
+    "react_config": {
+      "max_iterations": 999
+    },
     "max_memory_count": 999,
     "Translate": {
-      "werewolf": "狼人",
-      "villager": "村民",
-      "seer": "预言家",
-      "witch": "女巫",
-      "speech": "发言",
-      "vote": "投票",
-      "justify": "辩护",
-      "testament": "遗言",
-      "banished": "被放逐",
-      "werewolf_kill": "被狼人击杀",
-      "witch_poison": "被女巫毒死",
-      "werewolf_victory": "狼人胜利",
-      "villager_victory": "村民胜利",
-      "draw": "平局",
-      "game_controller_registered": "游戏控制器已注册",
-      "ui_system_registered": "UI系统已注册",
-      "day_system_registered": "白天系统已注册",
-      "night_system_registered": "夜晚系统已注册",
-      "public_memory_registered": "公共记忆已注册",
-      "llm_settings_setup": "LLM设置已设置",
-      "not_vote_phase": "不在投票阶段",
-      "vote_success": "投票成功",
-      "not_werewolf_vote_phase": "不是狼人选择阶段",
-      "werewolf_vote_success": "选择目标成功",
-      "witch_save_already": "女巫的解药已经被使用过",
-      "witch_save_success": "女巫使用解药救人成功",
-      "witch_save_not_target": "今晚没有需要救的人",
-      "witch_poison_already": "女巫的毒药已经被使用过",
-      "witch_poison_success": "女巫使用毒药毒人成功",
-      "witch_poison_not_target": "今晚没有需要毒的人",
-      "night_phase": "夜晚阶段",
-      "werewolf_speech": "狼人发言",
-      "werewolf_vote": "狼人投票",
-      "seer_action": "预言家行动",
-      "witch_action": "女巫行动",
-      "night_death": "{playerId} 被狼人击杀",
-      "banished_result": "{targetId} 被放逐",
-      "abandon_banishment": "无人被放逐",
-      "vote_target": "投给了{targetId}",
-      "seer_result": "查验结果: {targetId} {result}",
-      "witch_save_target": "女巫使用解药救下了{targetId}",
-      "witch_poison_target": "女巫使用毒药毒死了{targetId}",
-      "werewolf_night_speech_prompt": "狼人，请讨论如何选择目标进行击杀",
-      "werewolf_night_prompt": "狼人，请使用werewolf_vote工具选择一个目标进行击杀",
-      "seer_night_prompt": "预言家，请使用seer_investigate工具选择一个玩家进行查验",
-      "witch_night_prompt": "女巫，请使用witch_save工具救人或使用witch_poison工具毒人",
-      "speech_prompt": "请进行发言表达自己当前的理解",
-      "vote_prompt": "请使用vote工具投票选择一个玩家进行放逐",
-      "justify_prompt": "请进行辩护",
-      "testament_prompt": "你已经被投票放逐，请留下遗言帮助还或者的同阵营成员胜利",
-      "llm_settings_registered": "LLM设置已注册",
-      "werewolf_private_speech": "狼人夜晚讨论",
-      "witch_kill": "被女巫击杀",
-      "is_werewolf": "是狼人",
-      "not_werewolf": "不是狼人",
+      "werewolf": "🐺 狼人",
+      "villager": "👥 村民",
+      "seer": "🔮 预言家",
+      "witch": "🧙‍♀️ 女巫",
+      "speech": "💬 发言",
+      "vote": "🗳️ 投票",
+      "justify": "🛡️ 辩护",
+      "testament": "📝 遗言",
+      "banished": "🚫 被放逐",
+      "werewolf_kill": "💀 被狼人击杀",
+      "witch_poison": "☠️ 被女巫毒死",
+      "werewolf_victory": "🏆 狼人胜利",
+      "villager_victory": "🏆 村民胜利",
+      "draw": "🤝 平局",
+      "game_controller_registered": "🎮 游戏控制器已注册",
+      "ui_system_registered": "🖥️ UI系统已注册",
+      "day_system_registered": "☀️ 白天系统已注册",
+      "night_system_registered": "🌙 夜晚系统已注册",
+      "public_memory_registered": "🧠 公共记忆已注册",
+      "llm_settings_setup": "⚙️ LLM设置已设置",
+      "not_vote_phase": "⏰ 不在投票阶段",
+      "skill_already_used": "❌ 该回合你已经不能再使用该技能",
+      "vote_success": "✅ 投票成功",
+      "not_werewolf_vote_phase": "🌙 不是狼人选择阶段",
+      "werewolf_vote_success": "🎯 选择目标成功",
+      "witch_save_already": "💊 女巫的解药已经被使用过",
+      "witch_save_success": "💚 女巫使用解药救人成功",
+      "witch_save_not_target": "😴 今晚没有需要救的人",
+      "witch_poison_already": "☠️ 女巫的毒药已经被使用过",
+      "witch_poison_success": "💀 女巫使用毒药毒人成功",
+      "witch_poison_not_target": "😴 今晚没有需要毒的人",
+      "night_phase": "🌙 夜晚阶段",
+      "werewolf_speech": "🐺 狼人发言",
+      "werewolf_vote": "🐺 狼人投票",
+      "seer_action": "🔮 预言家行动",
+      "witch_action": "🧙‍♀️ 女巫行动",
+      "night_results": "🌙 夜晚结果",
+      "werewolf_current_target": "🎯 狼人当前目标: {targetId}",
+      "night_death": "💀 {playerId} 被狼人击杀",
+      "vote_self_not_allowed": "🚫 不能投给自己",
+      "banished_result": "🚫 {targetId} 被放逐",
+      "abandon_banishment": "🤷‍♂️ 无人被放逐",
+      "vote_target": "🗳️ 投给了{targetId}",
+      "seer_result": "🔍 查验结果: {targetId} {result}",
+      "witch_save_target": "💚 女巫使用解药救下了{targetId}",
+      "witch_poison_target": "💀 女巫使用毒药毒死了{targetId}",
+      "werewolf_night_speech_prompt": "🐺 狼人，请讨论如何选择目标进行击杀",
+      "werewolf_night_prompt": "🐺 狼人，请使用werewolf_vote工具选择一个目标进行击杀，请尽量不要选择自己和其他狼人，使用who_is_werewolf工具获取狼人的成员",
+      "seer_night_prompt": "🔮 预言家，请使用seer_investigate工具选择一个玩家进行查验",
+      "witch_night_prompt": "🧙‍♀️ 女巫，请使用witch_save工具救人或使用witch_poison工具毒人",
+      "speech_prompt": "💬 请进行发言表达自己当前的理解，注意你的发言所有人都可以得知",
+      "vote_prompt": "🗳️ 请使用vote工具投票选择一个玩家进行放逐，被放逐的玩家将死亡，请谨慎投票",
+      "justify_prompt": "🛡️ 请进行辩护",
+      "testament_prompt": "📝 你已经被投票放逐，请留下遗言帮助还或者的同阵营成员胜利",
+      "fallback_speech": "🤔 我暂时无法详细分析。",
+      "llm_settings_registered": "⚙️ LLM设置已注册",
+      "werewolf_private_speech": "🐺 狼人夜晚讨论",
+      "witch_kill": "💀 被女巫击杀",
+      "is_werewolf": "🐺 是狼人",
+      "not_werewolf": "👥 不是狼人",
+      "night_no_kill": "😴 今晚是平安夜",
       "prompt": {
-        "game_rule": "游戏规则",
-        "your_role": "你的角色",
-        "your_role_introduction": "你的角色介绍",
-        "your_name": "你的名字",
-        "known_speech_history": "已知的发言历史"
+        "game_rule": "📖 游戏规则",
+        "your_role": "🎭 你的角色",
+        "your_role_introduction": "📋 你的角色介绍",
+        "your_name": "🏷️ 你的名字",
+        "known_speech_history": "📚 已知的发言历史"
       },
-      "memory_format": "- 玩家 {playerId} 在 {stats} 环节说：\n{content}"
+      "memory_format": "📝 玩家 {playerId} 在 {stats} 环节说：\n{content}"
     },
     "game_prompt": {
-      "basic_rules": "这是一个狼人杀游戏。游戏分为夜晚和白天两个阶段。夜晚阶段，狼人可以击杀一个玩家，预言家可以查验一个玩家的身份，女巫可以使用解药救人或使用毒药毒人。白天阶段，所有玩家进行发言和投票，得票最多的玩家将被放逐。",
+      "basic_rules": "🎮 这是一个狼人杀游戏。游戏分为🌙夜晚和☀️白天两个阶段。🌙夜晚阶段，🐺狼人可以击杀一个玩家，🔮预言家可以查验一个玩家的身份，🧙‍♀️女巫可以使用解药救人或使用毒药毒人。☀️白天阶段，所有玩家进行💬发言和🗳️投票，得票最多的玩家将被🚫放逐。",
       "phase_rules": {
-        "night": "夜晚阶段：狼人阵营可以击杀一名玩家，预言家可以查验一名玩家身份，女巫可以使用药剂。",
-        "day": "白天阶段：所有玩家依次发言，然后进行投票放逐一名玩家。"
+        "night": "🌙 夜晚阶段：🐺狼人阵营可以击杀一名玩家，🔮预言家可以查验一名玩家身份，🧙‍♀️女巫可以使用药剂。",
+        "day": "☀️ 白天阶段：所有玩家依次💬发言，然后进行🗳️投票放逐一名玩家。"
       },
       "victory_conditions": {
-        "werewolf": "狼人阵营胜利条件：消灭所有村民阵营玩家（包括预言家和女巫）",
-        "villager": "村民阵营胜利条件：消灭所有狼人阵营玩家"
+        "werewolf": "🏆 狼人阵营胜利条件：消灭所有村民阵营玩家（包括🔮预言家和🧙‍♀️女巫）",
+        "villager": "🏆 村民阵营胜利条件：消灭所有🐺狼人阵营玩家"
       },
-      "tool_usage_requirements": "重要提醒：在每次行动前，你必须使用get_alive_players工具获取当前存活玩家列表，使用get_player_role工具确认自己的身份，使用get_dead_players工具了解死亡玩家情况。"
+      "tool_usage_requirements": "⚠️ 重要提醒：在每次行动前，你必须使用get_alive_players工具获取当前存活玩家列表，使用playerRole_of_myself工具确认自己的身份，使用get_dead_players工具了解死亡玩家情况。"
     },
     "role_prompt": {
       "狼人": {
-        "identity_statement": "你是狼人阵营的一员，你的名字是{playerId}。你与同阵营的狼人是生死与共的伙伴。",
-        "role_introduction": "夜晚阶段，你可以与其他狼人讨论并选择一个目标进行击杀。白天阶段，你需要伪装成村民，避免被放逐。",
+        "identity_statement": "🐺 你是狼人阵营的一员，你的名字是{playerId}。你与同阵营的狼人是生死与共的伙伴。",
+        "role_introduction": "🌙 夜晚阶段，你可以与其他狼人讨论并选择一个目标进行击杀。☀️ 白天阶段，你需要伪装成村民，避免被放逐。",
         "strategy_guide": {
-          "night": "夜晚策略：与其他狼人讨论，选择对狼人阵营威胁最大的目标进行击杀。优先击杀预言家、女巫等有特殊能力的村民。",
-          "day": "白天策略：伪装成普通村民，通过发言转移注意力，避免被怀疑。可以假装分析局势，引导村民怀疑其他玩家。"
+          "night": "🌙 夜晚策略：与其他狼人讨论，选择对狼人阵营威胁最大的目标进行击杀。优先击杀🔮预言家、🧙‍♀️女巫等有特殊能力的村民。",
+          "day": "☀️ 白天策略：伪装成普通村民，通过💬发言转移注意力，避免被怀疑。可以假装分析局势，引导村民怀疑其他玩家。"
         },
-        "victory_path": "获胜路径：通过夜晚击杀和白天伪装，逐步消灭所有村民阵营玩家。",
-        "key_actions": "关键行动：夜晚击杀、白天伪装发言、投票时避免投给同阵营成员。",
-        "tool_priorities": "必需工具：get_alive_players（获取存活玩家）、werewolf_vote（夜晚击杀）、vote（白天投票）"
+        "victory_path": "🏆 获胜路径：通过夜晚击杀和白天伪装，逐步消灭所有村民阵营玩家。",
+        "key_actions": "🎯 关键行动：夜晚击杀、白天伪装发言、投票时避免投给同阵营成员。",
+        "tool_priorities": "🛠️ 必需工具：get_alive_players（获取存活玩家）、werewolf_vote（夜晚击杀）、vote（白天投票）"
       },
       "村民": {
-        "identity_statement": "你是村民阵营的一员，你的名字是{playerId}。你与预言家、女巫等村民阵营成员是生死与共的伙伴。",
-        "role_introduction": "你没有特殊技能，但可以通过发言和投票来帮助找出狼人。",
+        "identity_statement": "👥 你是村民阵营的一员，你的名字是{playerId}。你与🔮预言家、🧙‍♀️女巫等村民阵营成员是生死与共的伙伴。",
+        "role_introduction": "💪 你没有特殊技能，但可以通过💬发言和🗳️投票来帮助找出狼人。",
         "strategy_guide": {
-          "night": "夜晚策略：作为普通村民，夜晚没有特殊行动。",
-          "day": "白天策略：仔细分析其他玩家的发言，寻找狼人的破绽。通过逻辑推理帮助村民阵营找出狼人。"
+          "night": "🌙 夜晚策略：作为普通村民，夜晚没有特殊行动。",
+          "day": "☀️ 白天策略：仔细分析其他玩家的💬发言，寻找🐺狼人的破绽。通过逻辑推理帮助村民阵营找出狼人。"
         },
-        "victory_path": "获胜路径：通过发言和投票，帮助村民阵营找出并消灭所有狼人。",
-        "key_actions": "关键行动：发言分析、投票选择可疑玩家。",
-        "tool_priorities": "必需工具：get_alive_players（获取存活玩家）、vote（投票）"
+        "victory_path": "🏆 获胜路径：通过发言和投票，帮助村民阵营找出并消灭所有狼人。",
+        "key_actions": "🎯 关键行动：发言分析、投票选择可疑玩家。",
+        "tool_priorities": "🛠️ 必需工具：get_alive_players（获取存活玩家）、vote（投票）"
       },
       "预言家": {
-        "identity_statement": "你是预言家，属于村民阵营，你的名字是{playerId}。你与村民、女巫等村民阵营成员是生死与共的伙伴。",
-        "role_introduction": "夜晚阶段，你可以查验一个玩家的身份，知道他是否是狼人。",
+        "identity_statement": "🔮 你是预言家，属于村民阵营，你的名字是{playerId}。你与👥村民、🧙‍♀️女巫等村民阵营成员是生死与共的伙伴。",
+        "role_introduction": "🌙 夜晚阶段，你可以查验一个玩家的身份，知道他是否是🐺狼人。",
         "strategy_guide": {
-          "night": "夜晚策略：选择最可疑的玩家进行查验，优先查验发言可疑或行为异常的玩家。",
-          "day": "白天策略：根据查验结果，通过发言引导村民找出狼人。可以适当透露查验信息，但要避免暴露自己身份。"
+          "night": "🌙 夜晚策略：选择最可疑的玩家进行查验，优先查验💬发言可疑或行为异常的玩家。",
+          "day": "☀️ 白天策略：根据查验结果，通过💬发言引导村民找出狼人。可以适当透露查验信息，但要避免暴露自己身份。"
         },
-        "victory_path": "获胜路径：通过查验找出狼人，帮助村民阵营消灭所有狼人。",
-        "key_actions": "关键行动：夜晚查验、白天引导发言、投票选择狼人。",
-        "tool_priorities": "必需工具：get_alive_players（获取存活玩家）、seer_investigate（查验身份）、vote（投票）"
+        "victory_path": "🏆 获胜路径：通过查验找出狼人，帮助村民阵营消灭所有狼人。",
+        "key_actions": "🎯 关键行动：夜晚查验、白天引导发言、投票选择狼人。",
+        "tool_priorities": "🛠️ 必需工具：get_alive_players（获取存活玩家）、seer_investigate（查验身份）、vote（投票）"
       },
       "女巫": {
-        "identity_statement": "你是女巫，属于村民阵营，你的名字是{playerId}。你与村民、预言家等村民阵营成员是生死与共的伙伴。",
-        "role_introduction": "你有一瓶解药和一瓶毒药，每瓶药只能使用一次。夜晚阶段，如果有人被狼人击杀，你可以选择使用解药救活他；你也可以选择使用毒药毒死一个玩家。",
+        "identity_statement": "🧙‍♀️ 你是女巫，属于村民阵营，你的名字是{playerId}。你与👥村民、🔮预言家等村民阵营成员是生死与共的伙伴。",
+        "role_introduction": "💊 你有一瓶解药和一瓶毒药，每瓶药只能使用一次。🌙 夜晚阶段，如果有人被狼人击杀，你可以选择使用解药救活他；你也可以选择使用毒药毒死一个玩家。",
         "strategy_guide": {
-          "night": "夜晚策略：解药要谨慎使用，优先救活预言家等关键角色。毒药要选择最可疑的狼人使用。",
-          "day": "白天策略：通过发言分析局势，帮助村民找出狼人。避免暴露自己身份。"
+          "night": "🌙 夜晚策略：💚解药要谨慎使用，优先救活🔮预言家等关键角色。☠️毒药要选择最可疑的狼人使用。",
+          "day": "☀️ 白天策略：通过💬发言分析局势，帮助村民找出狼人。避免暴露自己身份。"
         },
-        "victory_path": "获胜路径：通过合理使用药剂，帮助村民阵营消灭所有狼人。",
-        "key_actions": "关键行动：夜晚使用药剂、白天发言分析、投票选择狼人。",
-        "tool_priorities": "必需工具：get_alive_players（获取存活玩家）、get_night_kill_target（获取夜晚击杀目标）、witch_save（使用解药）、witch_poison（使用毒药）、vote（投票）"
+        "victory_path": "🏆 获胜路径：通过合理使用药剂，帮助村民阵营消灭所有狼人。",
+        "key_actions": "🎯 关键行动：夜晚使用药剂、白天发言分析、投票选择狼人。",
+        "tool_priorities": "🛠️ 必需工具：get_alive_players（获取存活玩家）、get_night_kill_target（获取夜晚击杀目标）、witch_save（使用解药）、witch_poison（使用毒药）、vote（投票）"
       }
     },
     "dynamic_context": {
-      "identity_reinforcement": "身份强化提醒：你是{role}，属于{team}阵营。你的名字是{playerId}。你必须时刻记住自己的身份和阵营归属。",
-      "state_awareness": "状态感知提醒：当前游戏阶段是{phase}。请使用get_alive_players工具获取当前存活玩家列表，使用get_dead_players工具了解死亡玩家情况。",
-      "strategy_guidance": "策略指导：{strategy}",
-      "tool_enforcement": "工具强制使用：在{action}前，你必须先使用{required_tools}工具获取必要信息。",
-      "victory_conditions": "胜利条件：{victory_condition}",
+      "identity_reinforcement": "🎭 身份强化提醒：你是{role}，属于{team}阵营。你的名字是{playerId}。你必须时刻记住自己的身份和阵营归属。",
+      "state_awareness": "📊 状态感知提醒：当前游戏阶段是{phase}。请使用get_alive_players工具获取当前存活玩家列表，使用get_dead_players工具了解死亡玩家情况。",
+      "strategy_guidance": "🧠 策略指导：{strategy}",
+      "tool_enforcement": "🛠️ 工具强制使用：在{action}前，你必须先使用{required_tools}工具获取必要信息。",
+      "victory_conditions": "🏆 胜利条件：{victory_condition}",
       "phase_specific_prompts": {
-        "night": "夜晚阶段：这是你发挥特殊能力的关键时刻。请根据你的角色进行相应的夜晚行动。",
-        "day": "白天阶段：通过发言和投票帮助你的阵营获得胜利。仔细分析其他玩家的发言。",
-        "vote": "投票阶段：请使用vote工具进行投票。投票前必须使用get_alive_players工具获取存活玩家列表。",
-        "speech": "发言阶段：通过发言表达你的分析和判断，帮助你的阵营获得胜利。"
+        "night": "🌙 夜晚阶段：这是你发挥特殊能力的关键时刻。请根据你的角色进行相应的夜晚行动。",
+        "day": "☀️ 白天阶段：通过💬发言和🗳️投票帮助你的阵营获得胜利。仔细分析其他玩家的发言。",
+        "vote": "🗳️ 投票阶段：请使用vote工具进行投票。投票前必须使用get_alive_players工具获取存活玩家列表。",
+        "speech": "💬 发言阶段：通过发言表达你的分析和判断，帮助你的阵营获得胜利。"
       }
     },
     "allow_memory_stats": {
-      "狼人": ["speech", "vote", "justify", "testament", "werewolf_kill"],
-      "村民": ["speech", "vote", "justify", "testament"],
-      "预言家": ["speech", "vote", "justify", "testament", "seer_investigate"],
-      "女巫": ["speech", "vote", "justify", "testament", "witch_save", "witch_poison"]
+      "🐺 狼人": ["🐺 狼人发言", "💬 发言", "🗳️ 投票", "🛡️ 辩护", "📝 遗言", "🐺 狼人击杀"],
+      "👥 村民": ["💬 发言", "🗳️ 投票", "🛡️ 辩护", "📝 遗言"],
+      "🔮 预言家": ["💬 发言", "🗳️ 投票", "🛡️ 辩护", "📝 遗言", "🔍 查验身份"],
+      "🧙‍♀️ 女巫": ["💬 发言", "🗳️ 投票", "🛡️ 辩护", "📝 遗言", "💚 使用解药", "☠️ 使用毒药"]
     },
     "room": {
-      "狼人": 2,
-      "村民": 4,
-      "预言家": 1,
-      "女巫": 1
+      "🐺 狼人": 2,
+      "👥 村民": 4,
+      "🔮 预言家": 1,
+      "🧙‍♀️ 女巫": 1
     }
   }
 } 

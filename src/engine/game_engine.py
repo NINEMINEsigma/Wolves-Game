@@ -16,13 +16,13 @@ class Player(ABC):
         self.playerRole:    str     = playerRole
         self.is_alive:      bool    = True
         self.cause_of_death:Optional[str] = None
+        skill_stats.update(skill_used=False)
         self.skill_stats:   Dict[str,bool] = skill_stats
 
     def kill(self, cause_of_death:str) -> None:
         if self.is_alive:
             self.is_alive = False
             self.cause_of_death = cause_of_death
-            self.testament()
 
     @property
     def is_werewolf(self) -> bool:
@@ -85,6 +85,8 @@ class GameController:
         self.current_phase = "night"
         self.current_player = None
 
+        os.system("cls")
+
         print_colorful(ConsoleFrontColor.GREEN,translate.get("game_start","game start"))
 
         while True:
@@ -116,6 +118,8 @@ class GameController:
         has_villager_alive = False
         has_werewolf_alive = False
         for player in self.players.values():
+            if not player.is_alive:
+                continue
             if player.is_villager:
                 has_villager_alive = True
             if player.is_werewolf:
@@ -150,16 +154,16 @@ class UISystem:
         print_colorful(ConsoleFrontColor.RED,f"**{title}**")
 
     def phase(self,phase:str) -> None:
-        print_colorful(ConsoleFrontColor.BLUE,f"- {phase}")
+        print_colorful(ConsoleFrontColor.YELLOW,f"- {phase}")
 
     def public_speech(self,playerId:str,role:str,message:str) -> None:
-        print(f"\t- {playerId}({role})：{message}")
+        print(f"\t- {ConsoleFrontColor.LIGHTBLUE_EX}{playerId}({role}){ConsoleFrontColor.RESET}：{message}")
 
     def private_speech(self,playerId:str,role:str,message:str) -> None:
-        print(f"\t- {playerId}({role})：{message}")
+        print(f"\t- {ConsoleFrontColor.BLUE}{playerId}({role}){ConsoleFrontColor.RESET}：{message}")
 
     def system_message(self,message:str) -> None:
-        print_colorful(ConsoleFrontColor.YELLOW,f"\t- {message}")
+        print_colorful(ConsoleFrontColor.LIGHTGREEN_EX,f"\t- {message}")
 
 __UISystem = UISystem()
 
@@ -261,6 +265,7 @@ class DaySystem:
     def _banished(self, targetId:str) -> None:
         config = ProjectConfig()
         game:GameController = Architecture.Get(GameController)
+        game.current_phase = config.FindItem("Translate",{}).get("testament","testament")
         ui:UISystem = Architecture.Get(UISystem)
         ui.system_message(
             config.FindItem("Translate",{}
@@ -268,6 +273,7 @@ class DaySystem:
                 ).format(targetId=targetId)
             )
         game.players[targetId].kill(config.FindItem("Translate",{}).get("banished","banished"))
+        game.players[targetId].testament()
         self._back_to_day_system()
 
     def _abandon_banishment(self) -> None:
@@ -298,13 +304,20 @@ class NightSystem:
         self.werewolf_vote_data:Dict[str,int] = {}
 
     def start(self) -> None:
+        config = ProjectConfig()
         game: GameController = Architecture.Get(GameController)
+        ui: UISystem = Architecture.Get(UISystem)
         
         # 检查胜利条件
         if game.check_victory_conditions():
             return
         
         self._werewolf_start()
+        ui.system_message(
+            config.FindItem("Translate",{}
+                ).get("werewolf_current_target","werewolf current target: {targetId}")
+                .format(targetId=self.werewolf_kill_target)
+                )
         self._witch_start()
         self._seer_start()
 
@@ -409,6 +422,10 @@ class NightSystem:
         game: GameController = Architecture.Get(GameController)
         ui: UISystem = Architecture.Get(UISystem)
         
+        phase = config.FindItem("Translate",{}).get("night_results","night results")
+        game.current_phase = phase
+        ui.phase(phase)
+        
         if self.werewolf_kill_target:
             game.players[self.werewolf_kill_target].kill(
                 config.FindItem("Translate",{}).get("werewolf_kill","werewolf kill"))
@@ -416,6 +433,11 @@ class NightSystem:
                 config.FindItem("Translate",{}
                     ).get("night_death","night death: {playerId} was killed by werewolves"
                     ).format(playerId=self.werewolf_kill_target)
+            )
+        else:
+            ui.system_message(
+                config.FindItem("Translate",{}
+                    ).get("night_no_kill","night no kill")
             )
 
 __NightSystem = NightSystem()
