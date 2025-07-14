@@ -85,7 +85,7 @@ class GameController:
         self.current_phase = "night"
         self.current_player = None
 
-        os.system("cls")
+        #os.system("cls")
 
         print_colorful(ConsoleFrontColor.GREEN,translate.get("game_start","game start"))
 

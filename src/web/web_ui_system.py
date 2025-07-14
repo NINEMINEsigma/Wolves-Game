@@ -19,9 +19,11 @@ class WebUISystem(UISystem):
         self.dead_players = []
         import asyncio
         self.loop = asyncio.get_event_loop()
+        __logger__.info(f"WebUISystem.__init__: event_queue id={id(self.websocket_server.event_queue) if hasattr(self.websocket_server, 'event_queue') else 'N/A'}, event_loop id={id(asyncio.get_event_loop())}")
         
     def _send_event(self, event_type: str, data: dict):
         """通过事件队列发送事件"""
+        __logger__.info(f"WebUISystem._send_event called: {event_type}, data: {data}, event_queue id={id(self.websocket_server.event_queue) if hasattr(self.websocket_server, 'event_queue') else 'N/A'}, event_loop id={id(asyncio.get_event_loop())}")
         if hasattr(self.websocket_server, 'event_queue') and self.websocket_server.event_queue:
             try:
                 event = {
@@ -38,6 +40,7 @@ class WebUISystem(UISystem):
         
     def title(self, title: str) -> None:
         """广播游戏标题更新"""
+        __logger__.info(f"WebUISystem.title called: {title}")
         self.current_round = self._extract_round_number(title)
         event_data = {
             "title": title,
@@ -55,6 +58,7 @@ class WebUISystem(UISystem):
         
     def phase(self, phase: str) -> None:
         """广播游戏阶段更新"""
+        __logger__.info(f"WebUISystem.phase called: {phase}")
         self.current_phase = phase
         event_data = {
             "phase": phase,
@@ -128,6 +132,7 @@ class WebUISystem(UISystem):
         
     def update_player_status(self, players: Dict[str, Dict]) -> None:
         """更新玩家状态"""
+        __logger__.info(f"WebUISystem.update_player_status called: {players}")
         alive_players = []
         dead_players = []
         

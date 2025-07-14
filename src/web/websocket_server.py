@@ -27,6 +27,7 @@ class WebSocketServer:
     def set_event_queue(self, event_queue: asyncio.Queue):
         """设置事件队列"""
         self.event_queue = event_queue
+        __logger__.info(f"WebSocketServer.set_event_queue: event_queue id={id(event_queue)}")
         
     def set_connection_event(self, connection_event: asyncio.Event):
         """设置连接事件"""
@@ -50,7 +51,7 @@ class WebSocketServer:
         
         try:
             self.observers[observer_id] = websocket
-            __logger__.info(f"新观察者连接: {observer_id}")
+            __logger__.info(f"新观察者连接: {observer_id}, 当前观察者: {list(self.observers.keys())}")
             
             # 通知连接事件（如果有的话）
             if self.connection_event and not self.connection_event.is_set():
@@ -74,6 +75,7 @@ class WebSocketServer:
         finally:
             if observer_id in self.observers:
                 del self.observers[observer_id]
+                __logger__.info(f"移除观察者: {observer_id}, 当前观察者: {list(self.observers.keys())}")
                 
     async def _handle_message(self, observer_id: str, message: str):
         """处理来自观察者的消息"""
@@ -111,18 +113,15 @@ class WebSocketServer:
         if not self.event_queue:
             __logger__.error("事件队列未设置")
             return
-            
+        __logger__.info(f"事件队列消费协程已启动, event_loop id={id(asyncio.get_event_loop())}")
         while True:
             try:
-                # 从队列中获取事件
                 event = await self.event_queue.get()
-                
-                # 处理UI事件
+                __logger__.info(f"事件已消费: {event}")
                 if event.get("type") == "ui_event":
                     await self.broadcast_event(event["event_type"], event["data"])
                 else:
                     __logger__.warning(f"未知事件类型: {event.get('type')}")
-                    
             except asyncio.CancelledError:
                 __logger__.info("事件队列处理被取消")
                 break
@@ -137,20 +136,19 @@ class WebSocketServer:
             "data": data,
             "timestamp": time.time()
         }
-        
-        # 创建断开连接的观察者列表
+        __logger__.info(f"广播事件: {event_type}, 当前观察者: {list(self.observers.keys())}, 消息: {message}")
         disconnected_observers = []
         
         for observer_id, websocket in self.observers.items():
             try:
                 await websocket.send_str(json.dumps(message))
+                __logger__.info(f"已向观察者 {observer_id} 发送消息")
             except ConnectionClosed:
                 disconnected_observers.append(observer_id)
             except Exception as e:
                 __logger__.error(f"向观察者 {observer_id} 发送消息失败: {e}")
                 disconnected_observers.append(observer_id)
                 
-        # 清理断开的连接
         for observer_id in disconnected_observers:
             del self.observers[observer_id]
             __logger__.info(f"清理断开的观察者连接: {observer_id}")

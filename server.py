@@ -8,6 +8,10 @@ import asyncio
 import threading
 from aiohttp import web
 from pathlib import Path
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # 创建Web组件
 __WebSocketServer = WebSocketServer()
@@ -15,6 +19,7 @@ __EventRecorder = EventRecorder()
 __ReplaySystem = ReplaySystem(__EventRecorder, __WebSocketServer)
 # 使用Web UI系统替换原有的UISystem
 __WebUISystem = WebUISystem(__WebSocketServer, __EventRecorder)
+logger.info(f"WebUISystem.__init__: event_queue id={id(__WebSocketServer.event_queue) if hasattr(__WebSocketServer, 'event_queue') else 'N/A'}")
 __GameController = GameController()
 __DaySystem = DaySystem()
 __NightSystem = NightSystem()
@@ -24,6 +29,7 @@ class GameEntry:
     def __init__(self):
         # 创建事件队列用于游戏逻辑和Web服务器之间的通信
         self.event_queue = asyncio.Queue()
+        logger.info(f"GameEntry.__init__: event_queue id={id(self.event_queue)}, event_loop id={id(asyncio.get_event_loop())}")
         # 创建连接等待事件
         self.connection_event = asyncio.Event()
         # 创建HTTP应用
@@ -99,6 +105,7 @@ class GameEntry:
                 
     async def start_web_server(self):
         """启动Web服务器"""
+        logger.info("start_web_server called")
         # 设置事件队列和连接事件
         self.websocket_server.set_event_queue(self.event_queue)
         self.websocket_server.set_connection_event(self.connection_event)
@@ -115,48 +122,48 @@ class GameEntry:
         
     async def wait_for_connection(self):
         """等待至少一个用户连接"""
+        logger.info("wait_for_connection called")
         print("等待用户连接...")
         await self.connection_event.wait()
         print(f"用户已连接，开始游戏。当前连接数: {self.websocket_server.get_observer_count()}")
         
     async def run_game_logic(self):
-        """在事件循环中运行同步游戏逻辑"""
-        def sync_game_start():
-            config = ProjectConfig()
-            # 配置游戏房间
-            room:Dict[str,int] = config.FindItem("room")
-            game:GameController = Architecture.Get(GameController)
-            
-            # 开始记录游戏事件
-            self.event_recorder.start_game()
-            
-            playerId:int = 1
-            for playerRole,playerCount in room.items():
-                for i in range(playerCount):
-                    game.add_player(PlayerAgent.create(f"player{playerId}",playerRole))
-                    playerId += 1
-            # 开始游戏
-            game.start_game()
-            
-            # 游戏结束后保存事件
-            self.event_recorder.end_game()
-        
-        # 在事件循环中运行同步游戏逻辑
-        await asyncio.to_thread(sync_game_start)
+        """在事件循环中运行异步游戏逻辑"""
+        logger.info("run_game_logic called")
+        config = ProjectConfig()
+        # 配置游戏房间
+        room:Dict[str,int] = config.FindItem("room")
+        game:GameController = Architecture.Get(GameController)
+        # 开始记录游戏事件
+        self.event_recorder.start_game()
+        playerId:int = 1
+        for playerRole,playerCount in room.items():
+            for i in range(playerCount):
+                game.add_player(PlayerAgent.create(f"player{playerId}",playerRole))
+                playerId += 1
+        # 开始游戏（假设start_game可以异步执行，否则直接调用）
+        if hasattr(game, 'start_game') and callable(getattr(game, 'start_game')):
+            result = game.start_game()
+            if hasattr(result, '__await__'):
+                await result
+        # 游戏结束后保存事件
+        self.event_recorder.end_game()
         
     async def start(self) -> None:
         """异步启动游戏"""
-        # 启动Web服务器
-        await self.start_web_server()
-        
-        # 等待至少一个用户连接
-        await self.wait_for_connection()
-        
-        # 同时运行游戏逻辑和消息处理
-        await asyncio.gather(
-            self.run_game_logic(),
-            self.websocket_server.process_event_queue()
-        )
+        logger.info("GameEntry.start called")
+        try:
+            # 启动Web服务器
+            await self.start_web_server()
+            # 等待至少一个用户连接
+            await self.wait_for_connection()
+            # 同时运行游戏逻辑和消息处理
+            await asyncio.gather(
+                self.run_game_logic(),
+                self.websocket_server.process_event_queue()
+            )
+        except Exception as e:
+            logger.exception(f"asyncio.gather or start failed: {e}")
 
 entry:GameEntry = GameEntry()
 
