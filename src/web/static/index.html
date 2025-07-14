@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI狼人杀游戏 - 观察者界面</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部信息 -->
+        <header class="header">
+            <h1>🐺 AI狼人杀游戏</h1>
+            <div class="game-info">
+                <div class="round-info">
+                    <span class="label">当前轮次:</span>
+                    <span id="current-round" class="value">等待开始...</span>
+                </div>
+                <div class="phase-info">
+                    <span class="label">当前阶段:</span>
+                    <span id="current-phase" class="value">等待开始...</span>
+                </div>
+                <div class="observer-info">
+                    <span class="label">观察者:</span>
+                    <span id="observer-count" class="value">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main class="main-content">
+            <!-- 左侧：游戏状态和玩家信息 -->
+            <div class="left-panel">
+                <!-- 玩家状态 -->
+                <div class="player-status-section">
+                    <h2>👥 玩家状态</h2>
+                    <div class="player-lists">
+                        <div class="alive-players">
+                            <h3>🟢 存活玩家 (<span id="alive-count">0</span>)</h3>
+                            <div id="alive-players-list" class="player-list">
+                                <!-- 存活玩家将在这里动态显示 -->
+                            </div>
+                        </div>
+                        <div class="dead-players">
+                            <h3>🔴 死亡玩家 (<span id="dead-count">0</span>)</h3>
+                            <div id="dead-players-list" class="player-list">
+                                <!-- 死亡玩家将在这里动态显示 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 游戏统计 -->
+                <div class="game-stats-section">
+                    <h2>📊 游戏统计</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">总事件数:</span>
+                            <span id="total-events" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">游戏时长:</span>
+                            <span id="game-duration" class="stat-value">0:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：聊天历史和回放控制 -->
+            <div class="right-panel">
+                <!-- 聊天历史 -->
+                <div class="chat-section">
+                    <h2>💬 游戏记录</h2>
+                    <div class="chat-controls">
+                        <button id="clear-chat" class="btn btn-secondary">清空记录</button>
+                        <button id="export-chat" class="btn btn-secondary">导出记录</button>
+                    </div>
+                    <div id="chat-history" class="chat-history">
+                        <!-- 聊天记录将在这里动态显示 -->
+                        <div class="system-message">
+                            <span class="timestamp">[系统]</span>
+                            <span class="message">欢迎来到AI狼人杀游戏！游戏开始后，这里将显示所有的游戏事件。</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 回放控制 -->
+                <div class="replay-section">
+                    <h2>🎬 回放控制</h2>
+                    <div class="replay-controls">
+                        <button id="start-replay" class="btn btn-primary">开始回放</button>
+                        <button id="pause-replay" class="btn btn-warning" disabled>暂停</button>
+                        <button id="resume-replay" class="btn btn-success" disabled>恢复</button>
+                        <button id="stop-replay" class="btn btn-danger" disabled>停止</button>
+                    </div>
+                    <div class="replay-settings">
+                        <div class="speed-control">
+                            <label for="playback-speed">播放速度:</label>
+                            <select id="playback-speed">
+                                <option value="0.5">0.5x</option>
+                                <option value="1.0" selected>1.0x</option>
+                                <option value="2.0">2.0x</option>
+                                <option value="5.0">5.0x</option>
+                            </select>
+                        </div>
+                        <div class="sequence-control">
+                            <label for="sequence-jump">跳转到序列:</label>
+                            <input type="number" id="sequence-jump" min="0" placeholder="序列号">
+                            <button id="jump-to-sequence" class="btn btn-secondary">跳转</button>
+                        </div>
+                    </div>
+                    <div class="replay-status">
+                        <div class="status-item">
+                            <span class="status-label">回放状态:</span>
+                            <span id="replay-status" class="status-value">未开始</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">当前序列:</span>
+                            <span id="current-sequence" class="status-value">0</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">总序列:</span>
+                            <span id="total-sequence" class="status-value">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部状态栏 -->
+        <footer class="footer">
+            <div class="connection-status">
+                <span class="status-indicator" id="connection-indicator">●</span>
+                <span id="connection-status">正在连接...</span>
+            </div>
+            <div class="observer-id">
+                观察者ID: <span id="observer-id">未分配</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modal-title">标题</h2>
+            <div id="modal-body">内容</div>
+        </div>
+    </div>
+
+    <!-- 加载动画 -->
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在连接游戏服务器...</div>
+    </div>
+
+    <script src="/static/game.js"></script>
+</body>
+</html> 

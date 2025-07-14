@@ -132,7 +132,6 @@ class GameController:
             self.victory_conditions = translate.get("draw","draw")
         return self.victory_conditions
         
-__GameController = GameController()
 
 #endregion
 
@@ -142,7 +141,8 @@ class UISystem:
     def __init__(self) -> None:
         config = ProjectConfig()
         print(config.FindItem("Translate",{}).get("ui_system_registered","ui system registered"))
-        Architecture.RegisterGeneric(
+        Architecture.Register(
+            UISystem,
             self,
             lambda: __logger__.log(
                 logging.INFO,
@@ -164,8 +164,6 @@ class UISystem:
 
     def system_message(self,message:str) -> None:
         print_colorful(ConsoleFrontColor.LIGHTGREEN_EX,f"\t- {message}")
-
-__UISystem = UISystem()
 
 #endregion
 
@@ -287,8 +285,6 @@ class DaySystem:
     def _back_to_day_system(self) -> None:
         pass
         
-__DaySystem = DaySystem()
-
 #endregion
 
 #region 拥有夜晚行动能力的角色依次进行{群体讨论/思考-决策发动技能} 夜晚环节
@@ -439,7 +435,5 @@ class NightSystem:
                 config.FindItem("Translate",{}
                     ).get("night_no_kill","night no kill")
             )
-
-__NightSystem = NightSystem()
 
 #endregion

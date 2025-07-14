@@ -166,6 +166,15 @@
       "👥 村民": 4,
       "🔮 预言家": 1,
       "🧙‍♀️ 女巫": 1
+    },
+    "web": {
+      "websocket_host": "localhost",
+      "websocket_port": 8765,
+      "static_files_path": "src/web/static",
+      "event_log_path": "logs/game_events.json",
+      "enable_console_output": true,
+      "max_observers": 100,
+      "heartbeat_interval": 30
     }
   }
 } 

@@ -1,0 +1,432 @@
+{
+  "game_summary": {
+    "total_events": 35,
+    "event_types": {
+      "game_start": 1,
+      "title": 1,
+      "phase": 7,
+      "private_speech": 12,
+      "system_message": 4,
+      "public_speech": 9,
+      "game_end": 1
+    },
+    "start_time": 1752506481.5321596,
+    "end_time": 1752506552.7237906,
+    "duration": 71.19163107872009
+  },
+  "events": [
+    {
+      "sequence_id": 1,
+      "timestamp": 1752506481.5321596,
+      "event_type": "game_start",
+      "data": {
+        "timestamp": 1752506481.5321596,
+        "message": "游戏开始"
+      }
+    },
+    {
+      "sequence_id": 2,
+      "timestamp": 1752506482.2218864,
+      "event_type": "title",
+      "data": {
+        "title": "round 1",
+        "round": 0
+      }
+    },
+    {
+      "sequence_id": 3,
+      "timestamp": 1752506482.2281656,
+      "event_type": "phase",
+      "data": {
+        "phase": "🐺 狼人发言",
+        "phase_emoji": "🐺"
+      }
+    },
+    {
+      "sequence_id": 4,
+      "timestamp": 1752506487.614621,
+      "event_type": "private_speech",
+      "data": {
+        "playerId": "player1",
+        "role": "🐺 狼人",
+        "message": "狼人玩家可从当前存活玩家中选择目标，确保不投给自己或阵营成员。目前存活玩家有player1到player8，狼人角色确认为玩家1。选择目标时优先考虑符合狼人设定的候选人。",
+        "speech_type": "private",
+        "timestamp": 1752506487.614621,
+        "visible_to": [
+          "🐺 狼人"
+        ]
+      }
+    },
+    {
+      "sequence_id": 5,
+      "timestamp": 1752506494.9041123,
+      "event_type": "private_speech",
+      "data": {
+        "playerId": "player2",
+        "role": "🐺 狼人",
+        "message": "当前存活玩家列表为['player1', 'player2', 'player3', 'player4', 'player5', 'player6', 'player7', 'player8']。狼人需从这些玩家中选择目标进行击杀。若想确认角色身份，请使用 get_player_role 工具。",
+        "speech_type": "private",
+        "timestamp": 1752506494.9041123,
+        "visible_to": [
+          "🐺 狼人"
+        ]
+      }
+    },
+    {
+      "sequence_id": 6,
+      "timestamp": 1752506494.9041123,
+      "event_type": "phase",
+      "data": {
+        "phase": "🐺 狼人投票",
+        "phase_emoji": "🐺"
+      }
+    },
+    {
+      "sequence_id": 7,
+      "timestamp": 1752506500.3921335,
+      "event_type": "private_speech",
+      "data": {
+        "playerId": "player1",
+        "role": "🐺 狼人",
+        "message": "player1",
+        "speech_type": "private",
+        "timestamp": 1752506500.3921335,
+        "visible_to": [
+          "🐺 狼人"
+        ]
+      }
+    },
+    {
+      "sequence_id": 8,
+      "timestamp": 1752506504.0934205,
+      "event_type": "private_speech",
+      "data": {
+        "playerId": "player2",
+        "role": "🐺 狼人",
+        "message": "没有执行行动",
+        "speech_type": "private",
+        "timestamp": 1752506504.0934205,
+        "visible_to": [
+          "🐺 狼人"
+        ]
+      }
+    },
+    {
+      "sequence_id": 9,
+      "timestamp": 1752506504.0944316,
+      "event_type": "system_message",
+      "data": {
+        "message": "🎯 狼人当前目标: player1",
+        "message_type": "system",
+        "timestamp": 1752506504.0944316
+      }
+    },
+    {
+      "sequence_id": 10,
+      "timestamp": 1752506504.0944316,
+      "event_type": "phase",
+      "data": {
+        "phase": "🧙‍♀️ 女巫行动",
+        "phase_emoji": "🧙‍♀️"
+      }
+    },
+    {
+      "sequence_id": 11,
+      "timestamp": 1752506508.6297662,
+      "event_type": "private_speech",
+      "data": {
+        "playerId": "player8",
+        "role": "🧙‍♀️ 女巫",
+        "message": "没有执行行动",
+        "speech_type": "private",
+        "timestamp": 1752506508.6297662,
+        "visible_to": [
+          "🧙‍♀️ 女巫"
+        ]
+      }
+    },
+    {
+      "sequence_id": 12,
+      "timestamp": 1752506508.6307788,
+      "event_type": "phase",
+      "data": {
+        "phase": "🔮 预言家行动",
+        "phase_emoji": "🔮"
+      }
+    },
+    {
+      "sequence_id": 13,
+      "timestamp": 1752506510.1830943,
+      "event_type": "private_speech",
+      "data": {
+        "playerId": "player7",
+        "role": "🔮 预言家",
+        "message": "没有执行行动",
+        "speech_type": "private",
+        "timestamp": 1752506510.1830943,
+        "visible_to": [
+          "🔮 预言家"
+        ]
+      }
+    },
+    {
+      "sequence_id": 14,
+      "timestamp": 1752506510.1840975,
+      "event_type": "phase",
+      "data": {
+        "phase": "🌙 夜晚结果",
+        "phase_emoji": "🌙"
+      }
+    },
+    {
+      "sequence_id": 15,
+      "timestamp": 1752506510.1840975,
+      "event_type": "system_message",
+      "data": {
+        "message": "💀 player1 被狼人击杀",
+        "message_type": "system",
+        "timestamp": 1752506510.1840975
+      }
+    },
+    {
+      "sequence_id": 16,
+      "timestamp": 1752506510.1902926,
+      "event_type": "phase",
+      "data": {
+        "phase": "💬 发言",
+        "phase_emoji": "💬"
+      }
+    },
+    {
+      "sequence_id": 17,
+      "timestamp": 1752506512.1467216,
+      "event_type": "public_speech",
+      "data": {
+        "playerId": "player2",
+        "role": "🐺 狼人",
+        "message": "我在狼人阵营中理解游戏规则如下：  \n- 目标选择必须基于狼人设定的玩家，避免投给自己或阵营成员。  \n- 当前存活玩家包括 player2 和其他玩家，需从列表中选择。  \n- 玩家身份已确认为 player1，可随时使用get_player_role确认。",
+        "speech_type": "public",
+        "timestamp": 1752506512.1467216
+      }
+    },
+    {
+      "sequence_id": 18,
+      "timestamp": 1752506514.3329225,
+      "event_type": "public_speech",
+      "data": {
+        "playerId": "player3",
+        "role": "👥 村民",
+        "message": "[your answer here (In the same language as the user's question)]\n```\n在当前游戏中，我已经确认自己扮演村民阵营的角色，身份为 player3。当前存活的玩家包括 player2、player3、player4、player5、player6、player7 和 player8。如果需要，可以进一步确认其他角色或讨论游戏规则的适用情况。",
+        "speech_type": "public",
+        "timestamp": 1752506514.3329225
+      }
+    },
+    {
+      "sequence_id": 19,
+      "timestamp": 1752506515.2693033,
+      "event_type": "public_speech",
+      "data": {
+        "playerId": "player4",
+        "role": "👥 村民",
+        "message": "(your answer here)",
+        "speech_type": "public",
+        "timestamp": 1752506515.2693033
+      }
+    },
+    {
+      "sequence_id": 20,
+      "timestamp": 1752506516.672536,
+      "event_type": "public_speech",
+      "data": {
+        "playerId": "player5",
+        "role": "👥 村民",
+        "message": "我的当前身份是村民阵营，已确认身份为 player3，存活玩家包括 player2、player4、player5、player6、player7、player8。我会确保发言内容被所有人知晓，说明我们已确认状态并准备继续游戏。",
+        "speech_type": "public",
+        "timestamp": 1752506516.672536
+      }
+    },
+    {
+      "sequence_id": 21,
+      "timestamp": 1752506517.7931557,
+      "event_type": "public_speech",
+      "data": {
+        "playerId": "player6",
+        "role": "👥 村民",
+        "message": "我的身份是村民阵营，当前存活玩家包括 player2、player3、player4、player5、player6、player7 和 player8。我已经确认自己的身份为 player3，并确保所有参与者的角色和状态明确知晓。",
+        "speech_type": "public",
+        "timestamp": 1752506517.7931557
+      }
+    },
+    {
+      "sequence_id": 22,
+      "timestamp": 1752506520.5264797,
+      "event_type": "public_speech",
+      "data": {
+        "playerId": "player7",
+        "role": "🔮 预言家",
+        "message": "我了解狼人杀的游戏规则，身份是村民阵营，存活玩家包括玩家2、3、4、5、6、7和8。当前我已确认自己身份为玩家3，确保所有参与者的角色和状态明确知晓。",
+        "speech_type": "public",
+        "timestamp": 1752506520.5264797
+      }
+    },
+    {
+      "sequence_id": 23,
+      "timestamp": 1752506523.0668974,
+      "event_type": "public_speech",
+      "data": {
+        "playerId": "player8",
+        "role": "🧙‍♀️ 女巫",
+        "message": "我是村民阵营的女巫，身份为 player3。当前存活玩家包括玩家2、3、4、5、6、7、8，已死的有玩家1，狼人选择杀害的对象是 player1。我已确认自己的角色和存活状态。",
+        "speech_type": "public",
+        "timestamp": 1752506523.0668974
+      }
+    },
+    {
+      "sequence_id": 24,
+      "timestamp": 1752506523.0668974,
+      "event_type": "phase",
+      "data": {
+        "phase": "🗳️ 投票",
+        "phase_emoji": "🗳️"
+      }
+    },
+    {
+      "sequence_id": 25,
+      "timestamp": 1752506524.6623235,
+      "event_type": "private_speech",
+      "data": {
+        "playerId": "player2",
+        "role": "🐺 狼人",
+        "message": "没有执行行动",
+        "speech_type": "private",
+        "timestamp": 1752506524.6623235,
+        "visible_to": [
+          "🐺 狼人"
+        ]
+      }
+    },
+    {
+      "sequence_id": 26,
+      "timestamp": 1752506528.652705,
+      "event_type": "public_speech",
+      "data": {
+        "playerId": "player3",
+        "role": "👥 村民",
+        "message": "🗳️ 投给了player2",
+        "speech_type": "public",
+        "timestamp": 1752506528.652705
+      }
+    },
+    {
+      "sequence_id": 27,
+      "timestamp": 1752506536.0898616,
+      "event_type": "private_speech",
+      "data": {
+        "playerId": "player4",
+        "role": "👥 村民",
+        "message": "没有执行行动",
+        "speech_type": "private",
+        "timestamp": 1752506536.0898616,
+        "visible_to": []
+      }
+    },
+    {
+      "sequence_id": 28,
+      "timestamp": 1752506537.1461372,
+      "event_type": "private_speech",
+      "data": {
+        "playerId": "player5",
+        "role": "👥 村民",
+        "message": "没有执行行动",
+        "speech_type": "private",
+        "timestamp": 1752506537.1461372,
+        "visible_to": []
+      }
+    },
+    {
+      "sequence_id": 29,
+      "timestamp": 1752506538.540524,
+      "event_type": "private_speech",
+      "data": {
+        "playerId": "player6",
+        "role": "👥 村民",
+        "message": "没有执行行动",
+        "speech_type": "private",
+        "timestamp": 1752506538.540524,
+        "visible_to": []
+      }
+    },
+    {
+      "sequence_id": 30,
+      "timestamp": 1752506540.9231472,
+      "event_type": "private_speech",
+      "data": {
+        "playerId": "player7",
+        "role": "🔮 预言家",
+        "message": "没有执行行动",
+        "speech_type": "private",
+        "timestamp": 1752506540.9231472,
+        "visible_to": [
+          "🔮 预言家"
+        ]
+      }
+    },
+    {
+      "sequence_id": 31,
+      "timestamp": 1752506550.1961086,
+      "event_type": "private_speech",
+      "data": {
+        "playerId": "player8",
+        "role": "🧙‍♀️ 女巫",
+        "message": "没有执行行动",
+        "speech_type": "private",
+        "timestamp": 1752506550.1961086,
+        "visible_to": [
+          "🧙‍♀️ 女巫"
+        ]
+      }
+    },
+    {
+      "sequence_id": 32,
+      "timestamp": 1752506550.1966434,
+      "event_type": "system_message",
+      "data": {
+        "message": "🚫 player2 被放逐",
+        "message_type": "system",
+        "timestamp": 1752506550.1966434
+      }
+    },
+    {
+      "sequence_id": 33,
+      "timestamp": 1752506552.7196789,
+      "event_type": "public_speech",
+      "data": {
+        "playerId": "player2",
+        "role": "🐺 狼人",
+        "message": "(I'm player3, and I am still alive. My role is a player from the村民阵营, and all players from the surviving list are confirmed as valid participants.)",
+        "speech_type": "public",
+        "timestamp": 1752506552.7196789
+      }
+    },
+    {
+      "sequence_id": 34,
+      "timestamp": 1752506552.7226844,
+      "event_type": "system_message",
+      "data": {
+        "message": "🏆 村民胜利",
+        "message_type": "system",
+        "timestamp": 1752506552.7226844
+      }
+    },
+    {
+      "sequence_id": 35,
+      "timestamp": 1752506552.7237906,
+      "event_type": "game_end",
+      "data": {
+        "duration": 71.19163107872009,
+        "total_events": 34,
+        "message": "游戏结束"
+      }
+    }
+  ]
+}

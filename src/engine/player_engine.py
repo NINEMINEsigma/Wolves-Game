@@ -62,8 +62,6 @@ class PublicMemory:
         game:GameController = Architecture.Get((GameController))
         self.memory.append((playerId,game.current_phase,message))
 
-__PublicMemory = PublicMemory()
-
 #endregion
 
 #region 角色功能
